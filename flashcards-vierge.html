@@ -1,0 +1,3674 @@
+<!DOCTYPE html>
+<html lang="fr">
+<!--
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                      FLASHCARDS APP — VERSION VIERGE                        ║
+║                    Application de révision de vocabulaire                   ║
+║                                                                              ║
+║  GUIDE D'INSTALLATION EN 5 ÉTAPES                                           ║
+║                                                                              ║
+║  ÉTAPE 1 — Créer une base de données Firebase                               ║
+║  ─────────────────────────────────────────────                               ║
+║  • Aller sur https://console.firebase.google.com                            ║
+║  • Créer un nouveau projet (nom libre)                                       ║
+║  • Dans "Realtime Database" → Créer une base de données                     ║
+║  • Choisir la région europe-west1                                            ║
+║  • Démarrer en mode test (règles ouvertes)                                  ║
+║  • Dans Paramètres du projet → Vos applications → Ajouter une app Web      ║
+║  • Copier les valeurs firebaseConfig dans ce fichier (chercher ÉTAPE 1)    ║
+║                                                                              ║
+║  ÉTAPE 2 — Clé API Pixabay (recherche d'images)                            ║
+║  ──────────────────────────────────────────────                              ║
+║  • Créer un compte gratuit sur https://pixabay.com/api/                     ║
+║  • Copier la clé dans PIXABAY_KEY (chercher ÉTAPE 2)                       ║
+║                                                                              ║
+║  ÉTAPE 3 — Clé API Mistral (génération de listes)                          ║
+║  ─────────────────────────────────────────────────                           ║
+║  • Créer un compte sur https://console.mistral.ai                           ║
+║  • Générer une clé API dans "API Keys"                                      ║
+║  • Copier la clé dans MISTRAL_KEY (chercher ÉTAPE 3)                       ║
+║                                                                              ║
+║  ÉTAPE 4 — Choisir un mot de passe enseignant                              ║
+║  ────────────────────────────────────────────                                ║
+║  • Remplacer VOTRE_MOT_DE_PASSE (chercher ÉTAPE 4)                         ║
+║                                                                              ║
+║  ÉTAPE 5 — Déployer sur Cloudflare Pages                                   ║
+║  ────────────────────────────────────────                                    ║
+║  • Aller sur https://pages.cloudflare.com                                   ║
+║  • Créer un nouveau projet → Upload direct                                  ║
+║  • Glisser ce fichier renommé en index.html                                 ║
+║  • Votre app est accessible à l'URL générée par Cloudflare                  ║
+║                                                                              ║
+║  Auteur  : Généré avec Claude (Anthropic)                                   ║
+║  Licence : Usage personnel/éducatif                                          ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+-->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Flashcards-English 🇬🇧</title>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       FIREBASE — SDK (Realtime Database, mode compat CDN)
+       ═══════════════════════════════════════════════════════════════ -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       PWA — MANIFESTE & ICÔNES
+       ═══════════════════════════════════════════════════════════════ -->
+
+  <!-- Manifeste PWA inline (évite un fichier externe) -->
+  <script>
+    const __manifest = {
+      name: 'Flashcards App',
+      short_name: 'Flashcards',
+      description: 'Application de révision de vocabulaire anglais',
+      start_url: '/',
+      display: 'standalone',
+      background_color: '#F0F4FF',
+      theme_color: '#4F6EF7',
+      orientation: 'portrait-primary',
+      icons: [
+        { src: '__icon192__', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+        { src: '__icon512__', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+      ]
+    };
+  </script>
+
+  <!-- Theme color navigateur -->
+  <meta name="theme-color" content="#4F6EF7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Flashcards">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Flashcards English">
+
+  <!-- Icône Apple (générée dynamiquement via canvas au démarrage) -->
+  <link rel="apple-touch-icon" id="apple-touch-icon" href="">
+  <link rel="icon" id="favicon" type="image/png" href="">
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       1. VARIABLES CSS & THÈME
+       ═══════════════════════════════════════════════════════════════ -->
+  <style>
+    :root {
+      /* Palette principale */
+      --primary:       #4F6EF7;
+      --primary-light: #7B94FA;
+      --primary-dark:  #2F4ED4;
+      --secondary:     #F76F4F;
+      --success:       #27C97A;
+      --danger:        #F74F6F;
+      --warning:       #F7C14F;
+
+      /* Neutres */
+      --bg:            #F0F4FF;
+      --surface:       #FFFFFF;
+      --surface2:      #EAF0FF;
+      --border:        #D0DAFF;
+      --text:          #1A1F3C;
+      --text-muted:    #6B7499;
+
+      /* Typographie */
+      --font-main:     'Nunito', 'Trebuchet MS', sans-serif;
+
+      /* Espacements */
+      --radius:        16px;
+      --radius-sm:     10px;
+      --radius-lg:     24px;
+      --shadow:        0 4px 24px rgba(79,110,247,0.12);
+      --shadow-lg:     0 8px 40px rgba(79,110,247,0.18);
+
+      /* Transitions */
+      --transition:    0.22s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       2. STYLES GLOBAUX & TYPOGRAPHIE
+       ═══════════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+    body {
+      font-family: var(--font-main);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1 { font-size: 1.8rem; font-weight: 900; }
+    h2 { font-size: 1.4rem; font-weight: 800; }
+    h3 { font-size: 1.1rem; font-weight: 700; }
+
+    input, textarea, select {
+      font-family: var(--font-main);
+      font-size: 1rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color var(--transition);
+      width: 100%;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--primary);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       3. COMPOSANTS UI — BOUTONS
+       ═══════════════════════════════════════════════════════════════ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 22px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-family: var(--font-main);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 3px 12px rgba(79,110,247,0.30);
+    }
+    .btn-primary:hover { background: var(--primary-dark); box-shadow: 0 6px 20px rgba(79,110,247,0.38); }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--primary);
+      border: 2px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--border); }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+      box-shadow: 0 3px 12px rgba(39,201,122,0.30);
+    }
+    .btn-ai {
+      background: linear-gradient(135deg, #7B4FF7, #4F6EF7);
+      color: #fff;
+      box-shadow: 0 3px 12px rgba(123,79,247,0.35);
+    }
+    .btn-ai:hover { background: linear-gradient(135deg, #6a3ee6, #3f5ee6); box-shadow: 0 6px 20px rgba(123,79,247,0.45); }
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-icon {
+      padding: 10px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+    .btn-icon:hover { background: var(--border); color: var(--text); }
+
+    .btn-sm { padding: 7px 14px; font-size: 0.88rem; }
+    .btn-lg { padding: 16px 32px; font-size: 1.15rem; border-radius: var(--radius); }
+
+    /* ═══════════════════════════════════════════════════════════════
+       3b. COMPOSANTS UI — MODALES
+       ═══════════════════════════════════════════════════════════════ */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(26,31,60,0.45);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: var(--shadow-lg);
+      animation: modalIn 0.25s cubic-bezier(.4,0,.2,1);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .modal-footer {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       3c. COMPOSANTS UI — TOASTS / NOTIFICATIONS
+       ═══════════════════════════════════════════════════════════════ */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      background: var(--text);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      box-shadow: var(--shadow);
+      animation: toastIn 0.3s ease;
+      pointer-events: auto;
+    }
+    .toast.success { background: var(--success); }
+    .toast.error   { background: var(--danger); }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       4a. LAYOUT GÉNÉRAL — BARRE DE NAVIGATION
+       ═══════════════════════════════════════════════════════════════ */
+    #app { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(79,110,247,0.07);
+    }
+    .topbar-logo {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .topbar-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      flex: 1;
+      padding: 0 16px;
+      overflow: hidden;
+    }
+    .topbar-breadcrumb span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .topbar-breadcrumb .sep { color: var(--border); }
+    .topbar-breadcrumb .crumb { cursor: pointer; }
+    .topbar-breadcrumb .crumb:hover { color: var(--primary); }
+    .topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       4b. VUE — PAGE PRINCIPALE (grille de dossiers)
+       ═══════════════════════════════════════════════════════════════ */
+    .view { display: none; flex: 1; }
+    .view.active { display: flex; flex-direction: column; }
+
+    .page-content {
+      padding: 32px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .page-title { display: flex; align-items: center; gap: 10px; }
+
+    /* Grille de dossiers / paquets (style Pearltrees) */
+    .folder-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+    }
+
+    .folder-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 0;
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .folder-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary-light);
+    }
+
+    .folder-card-thumb {
+      width: 100%;
+      height: 60%;
+      object-fit: cover;
+      background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.8rem;
+    }
+    .folder-card-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .folder-card-body {
+      padding: 10px 12px;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .folder-card-name {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.2;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .folder-card-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .folder-card-actions {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: none;
+      gap: 4px;
+    }
+    .folder-card:hover .folder-card-actions { display: flex; }
+
+    .folder-card-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      transition: all var(--transition);
+    }
+    .folder-card-btn.edit { background: var(--primary); color: #fff; }
+    .folder-card-btn.del  { background: var(--danger);  color: #fff; }
+    .folder-card-btn:hover { transform: scale(1.15); }
+
+    /* Carte "Ajouter" */
+    .folder-card-add {
+      border: 2px dashed var(--primary-light);
+      background: var(--surface2);
+      color: var(--primary);
+    }
+    .folder-card-add:hover {
+      background: #dce6ff;
+      border-color: var(--primary);
+    }
+    .folder-card-add .add-icon {
+      font-size: 2.5rem;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .folder-card-add .add-label {
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+
+    /* Badge couleur dossier classe */
+    .class-badge {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       4c. VUE — ÉDITEUR DE PAQUET (création de cartes)
+       ═══════════════════════════════════════════════════════════════ */
+    .editor-toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      padding: 16px 20px;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .card-editor-list { display: flex; flex-direction: column; gap: 16px; }
+
+    .card-editor-item {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 40px 1fr 1fr 120px 40px;
+      gap: 14px;
+      align-items: center;
+      transition: border-color var(--transition);
+    }
+    .card-editor-item:hover { border-color: var(--primary-light); }
+
+    .card-num {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .card-image-thumb {
+      width: 110px;
+      height: 80px;
+      border-radius: var(--radius-sm);
+      border: 2px dashed var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.6rem;
+      color: var(--text-muted);
+      background: var(--surface2);
+      overflow: hidden;
+      transition: all var(--transition);
+      position: relative;
+    }
+    .card-image-thumb:hover { border-color: var(--primary); color: var(--primary); }
+    .card-image-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      inset: 0;
+    }
+    .card-image-thumb .img-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .card-editor-item .btn-icon-del {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--surface2);
+      color: var(--danger);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      transition: all var(--transition);
+    }
+    .card-editor-item .btn-icon-del:hover { background: var(--danger); color: #fff; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       4d. VUE — GALERIE D'IMAGES (suggestions Pixabay)
+       ═══════════════════════════════════════════════════════════════ */
+    .image-gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+      max-height: 340px;
+      overflow-y: auto;
+    }
+    .image-gallery img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: all var(--transition);
+    }
+    .image-gallery img:hover { border-color: var(--primary); transform: scale(1.04); }
+    .image-gallery img.selected { border-color: var(--success); }
+
+    .image-search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .image-search-bar input { flex: 1; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       4e. VUE — INTERFACE ÉLÈVE (flashcard player)
+       ═══════════════════════════════════════════════════════════════ */
+    .student-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 32px 20px;
+      min-height: calc(100vh - 64px);
+    }
+
+    .student-header {
+      width: 100%;
+      max-width: 680px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .student-pack-title {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    .progress-bar-wrap {
+      width: 100%;
+      height: 10px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+    .progress-text {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* La carte flip */
+    .flashcard-scene {
+      width: 100%;
+      max-width: 480px;
+      height: 340px;
+      perspective: 1000px;
+      cursor: pointer;
+      margin: 0 auto 24px;
+    }
+    .flashcard-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(.4,0,.2,1);
+    }
+    .flashcard-inner.flipped { transform: rotateY(180deg); }
+
+    .flashcard-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+    .flashcard-front {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+    }
+    .flashcard-back {
+      background: var(--surface);
+      color: var(--text);
+      border: 3px solid var(--border);
+      transform: rotateY(180deg);
+    }
+
+    .flashcard-lang-badge {
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.75;
+      margin-bottom: 10px;
+    }
+    .flashcard-word {
+      font-size: 2rem;
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .flashcard-img {
+      width: 130px;
+      height: 130px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      margin-bottom: 10px;
+      border: 3px solid var(--border);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    .flashcard-hint {
+      font-size: 0.82rem;
+      opacity: 0.7;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Boutons correct / incorrect */
+    .answer-buttons {
+      display: flex;
+      gap: 24px;
+      margin-top: 8px;
+    }
+    .btn-correct, .btn-incorrect {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: none;
+      font-size: 2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+      box-shadow: var(--shadow);
+    }
+    .btn-correct  { background: var(--success); color: #fff; }
+    .btn-incorrect{ background: var(--danger);  color: #fff; }
+    .btn-correct:hover  { transform: scale(1.12); box-shadow: 0 6px 24px rgba(39,201,122,0.4); }
+    .btn-incorrect:hover{ transform: scale(1.12); box-shadow: 0 6px 24px rgba(247,79,111,0.4); }
+
+    .speaker-btn {
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      font-size: 1.3rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition);
+      margin-top: 10px;
+    }
+    .speaker-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* Écran de fin */
+    .end-screen {
+      text-align: center;
+      padding: 40px 20px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .end-emoji { font-size: 4rem; margin-bottom: 16px; }
+    .end-stats {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .end-stat {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 24px;
+      text-align: center;
+    }
+    .end-stat-num  { font-size: 2rem; font-weight: 900; }
+    .end-stat-label{ font-size: 0.82rem; color: var(--text-muted); font-weight: 700; }
+    .end-stat.ok   { border-color: var(--success); color: var(--success); }
+    .end-stat.ko   { border-color: var(--danger);  color: var(--danger); }
+    .end-buttons { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       4f. VUE — IMPORT DE LISTE
+       ═══════════════════════════════════════════════════════════════ */
+    .import-preview {
+      margin-top: 16px;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      background: var(--surface2);
+    }
+    .import-preview-row {
+      display: flex;
+      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .import-preview-row:last-child { border-bottom: none; }
+    .import-preview-fr { color: var(--primary); font-weight: 700; min-width: 120px; }
+    .import-preview-en { color: var(--text); }
+
+    /* Séparateurs radio */
+    .sep-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .sep-option {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--border);
+      background: var(--surface);
+      transition: all var(--transition);
+    }
+    .sep-option input[type=radio] { display: none; }
+    .sep-option.active { border-color: var(--primary); background: var(--surface2); color: var(--primary); }
+    .sep-custom-input { display: none; width: 80px; }
+    .sep-custom-input.visible { display: block; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       4g. VUE — LIEN DE PARTAGE
+       ═══════════════════════════════════════════════════════════════ */
+    .share-link-box {
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      font-family: monospace;
+      font-size: 0.88rem;
+      word-break: break-all;
+      margin-top: 10px;
+      color: var(--primary-dark);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       5. RESPONSIVE DESIGN
+       ═══════════════════════════════════════════════════════════════ */
+    @media (max-width: 700px) {
+      .page-content { padding: 20px 12px; }
+      .folder-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+      .card-editor-item {
+        grid-template-columns: 28px 1fr 1fr;
+        grid-template-rows: auto auto;
+      }
+      .card-editor-item .card-image-thumb { display: none; }
+      .card-editor-item .btn-icon-del { grid-column: 3; grid-row: 1; }
+      .flashcard-word { font-size: 1.5rem; }
+      .flashcard-scene { height: 300px; }
+      .flashcard-img { width: 100px; height: 100px; }
+      h1 { font-size: 1.4rem; }
+      .topbar-breadcrumb { font-size: 0.8rem; }
+      .modal { padding: 20px; }
+      .answer-buttons { gap: 16px; }
+      .btn-correct, .btn-incorrect { width: 60px; height: 60px; font-size: 1.7rem; }
+    }
+
+    @media (max-width: 400px) {
+      .folder-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       UTILITAIRES
+       ═══════════════════════════════════════════════════════════════ */
+    .hidden { display: none !important; }
+    .mt-8  { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-24 { margin-top: 24px; }
+    .flex  { display: flex; }
+    .gap-8 { gap: 8px; }
+    .gap-12{ gap: 12px; }
+    .label {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    /* Spinner chargement */
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Vue élève accueil (choisir paquet) */
+    .student-pack-select {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 32px 20px;
+      text-align: center;
+    }
+    .student-pack-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .student-pack-btn {
+      background: linear-gradient(135deg, #1a1a2e, #2d2d4e);
+      border: 2px solid #3d3d6e;
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all var(--transition);
+      font-family: var(--font-main);
+      font-size: 1rem;
+      font-weight: 700;
+      color: #ffffff;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+    .student-pack-btn:hover {
+      background: linear-gradient(135deg, #2a2a4e, #3d3d6e);
+      border-color: var(--primary-light);
+      transform: translateX(4px);
+      box-shadow: 0 6px 20px rgba(79,110,247,0.3);
+    }
+    .student-pack-btn .pack-icon { font-size: 1.8rem; }
+  </style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- ═══════════════════════════════════════════════════════
+       BARRE DE NAVIGATION SUPÉRIEURE
+       ═══════════════════════════════════════════════════════ -->
+  <nav class="topbar" id="topbar">
+    <div class="topbar-breadcrumb" id="breadcrumb"></div>
+    <div class="topbar-actions" id="topbar-actions"></div>
+  </nav>
+
+  
+
+  <!-- ═══════════════════════════════════════════════════════
+       VUE 1 — ACCUEIL ENSEIGNANT (liste des classes)
+       ═══════════════════════════════════════════════════════ -->
+  <div id="view-home" class="view">
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-title">
+          <h1>📁 Mes classes</h1>
+        </div>
+        <div class="flex gap-8" id="home-teacher-actions">
+          <button class="btn btn-secondary" onclick="showTransferModal()">🔁 Transfert</button>
+          <button class="btn btn-primary" onclick="showAddFolderModal('class')">➕ Nouvelle classe</button>
+        </div>
+      </div>
+      <div class="folder-grid" id="classes-grid"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       VUE 2 — DOSSIER CLASSE (liste des paquets)
+       ═══════════════════════════════════════════════════════ -->
+  <div id="view-class" class="view">
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-title">
+          <h1 id="class-title">Classe</h1>
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-secondary btn-sm" onclick="showShareModal('class')">🔗 Partager la classe</button>
+          <button class="btn btn-primary" onclick="showAddFolderModal('pack')">➕ Nouveau paquet</button>
+        </div>
+      </div>
+      <div class="folder-grid" id="packs-grid">
+        <!-- Rempli dynamiquement -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       VUE 3 — ÉDITEUR DE PAQUET (création de cartes)
+       ═══════════════════════════════════════════════════════ -->
+  <div id="view-editor" class="view">
+    <div class="page-content">
+      <div class="page-header">
+        <div class="page-title">
+          <h1 id="editor-pack-title">Paquet</h1>
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-secondary btn-sm" onclick="showShareModal('pack')">🔗 Partager</button>
+          <button class="btn btn-primary" onclick="savePackAndGoBack()">💾 Enregistrer</button>
+        </div>
+      </div>
+
+      <!-- Barre d'outils éditeur -->
+      <div class="editor-toolbar">
+        <button class="btn btn-secondary btn-sm" onclick="showImportModal()">📥 Importer une liste</button>
+        <button class="btn btn-ai btn-sm" onclick="showAIModal()">✨ Générer avec l'IA</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-primary btn-sm" onclick="addNewCard()">➕ Ajouter une carte</button>
+      </div>
+
+      <!-- Liste des cartes -->
+      <div class="card-editor-list" id="card-editor-list">
+        <!-- Rempli dynamiquement -->
+      </div>
+
+      <div style="margin-top:20px; text-align:center;">
+        <button class="btn btn-secondary" onclick="addNewCard()">➕ Ajouter une carte</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       VUE 4 — INTERFACE ÉLÈVE (sélection de paquet)
+       ═══════════════════════════════════════════════════════ -->
+  <div id="view-student-select" class="view">
+    <div class="student-pack-select">
+      <div style="font-size:3rem; margin-bottom:8px;">📚</div>
+      <h1 id="student-class-title">Révision</h1>
+      <p style="color:var(--text-muted); margin-top:8px;">Choisis un paquet à réviser :</p>
+      <div class="student-pack-list" id="student-pack-list"></div>
+      <!-- Paquet personnel élève -->
+      <div style="margin-top:16px; border-top:2px solid var(--border); padding-top:16px;">
+        <button class="student-pack-btn" onclick="openMyCards()" style="background:linear-gradient(135deg,#27C97A,#1a7a4a); border-color:#27C97A;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg viewBox="0 0 44 56" xmlns="http://www.w3.org/2000/svg" style="width:36px;height:36px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));">
+              <rect x="2" y="2" width="40" height="52" rx="6" fill="white"/>
+              <rect x="2" y="2" width="40" height="52" rx="6" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
+              <text x="22" y="36" text-anchor="middle" font-size="28" font-weight="900" fill="#27C97A" font-family="Arial,sans-serif">?</text>
+            </svg>
+          </span>
+          <span style="color:#fff;">Mes cartes</span>
+        </button>
+      </div>
+      <!-- Bouton téléchargement (caché si app déjà installée) -->
+      <div id="install-banner-student" style="margin-top:16px; padding:14px 18px; background:linear-gradient(135deg,#1a1a2e,#2d2d4e); border-radius:var(--radius); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+        <p style="color:rgba(255,255,255,0.85); font-size:0.85rem; font-weight:700;">📲 Installe l'app pour y accéder facilement !</p>
+        <button class="btn btn-sm" style="background:#fff; color:var(--primary); font-weight:800; flex-shrink:0;" onclick="handleInstallClick()">
+          Télécharger l'app
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       VUE 7 — MES CARTES (paquet personnel élève)
+       ═══════════════════════════════════════════════════════ -->
+  <div id="view-my-cards" class="view">
+    <div class="page-content" style="max-width:680px;">
+      <div class="page-header">
+        <div class="page-title"><h1>✍️ Mes cartes</h1></div>
+        <div class="flex gap-8">
+          <button class="btn btn-secondary btn-sm" onclick="goBackToStudentSelect()">← Retour</button>
+          <button class="btn btn-success btn-sm" id="btn-study-my-cards" onclick="startMyCardsStudy()" style="display:none;">▶️ Réviser</button>
+        </div>
+      </div>
+      <p style="color:var(--text-muted); margin-bottom:20px; font-size:0.92rem;">
+        Crée tes propres flashcards ! Elles sont sauvegardées sur ton appareil.
+      </p>
+      <div id="my-cards-list" style="display:flex; flex-direction:column; gap:12px;"></div>
+      <div style="margin-top:16px; text-align:center;">
+        <button class="btn btn-primary" onclick="addMyCard()">➕ Ajouter une carte</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       VUE 5 — INTERFACE ÉLÈVE (révision flashcards)
+       ═══════════════════════════════════════════════════════ -->
+  <div id="view-student" class="view">
+    <div class="student-view">
+
+      <!-- En-tête progression -->
+      <div class="student-header">
+        <div class="student-pack-title" id="student-pack-name">Paquet</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+        </div>
+        <div class="progress-text" id="progress-text">0 / 0</div>
+      </div>
+
+      <!-- La flashcard -->
+      <div class="flashcard-scene" id="flashcard-scene" onclick="flipCard()">
+        <div class="flashcard-inner" id="flashcard-inner">
+          <!-- Recto (Français) -->
+          <div class="flashcard-face flashcard-front" id="card-front">
+            <div class="flashcard-lang-badge">🇫🇷 Français</div>
+            <div class="flashcard-word" id="card-word-fr">—</div>
+            <div class="flashcard-hint">👆 Appuie pour voir la traduction</div>
+          </div>
+          <!-- Verso (Anglais) -->
+          <div class="flashcard-face flashcard-back" id="card-back">
+            <div class="flashcard-lang-badge">🇬🇧 English — <span style="font-size:0.7rem;opacity:0.7">appuie pour retourner</span></div>
+            <img id="card-img" class="flashcard-img hidden" src="" alt="">
+            <div class="flashcard-word" id="card-word-en">—</div>
+            <button class="speaker-btn" onclick="event.stopPropagation(); speak(studentCards[studentIndex] ? studentCards[studentIndex].en : '', 'en-GB');" title="Écouter à nouveau">🔊</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Boutons correct / incorrect (visibles uniquement au verso) -->
+      <div id="answer-zone" style="text-align:center; opacity:0; transition: opacity 0.3s; pointer-events:none;">
+        <p style="font-size:0.85rem; color:var(--text-muted); font-weight:700; margin-bottom:12px;">Tu connaissais ce mot ?</p>
+        <div class="answer-buttons">
+          <button class="btn-incorrect" onclick="answerCard(false)" title="Je ne savais pas">❌</button>
+          <button class="btn-correct"  onclick="answerCard(true)"  title="Je savais !">✅</button>
+        </div>
+      </div>
+
+      <!-- ✅ Écran de fin (à l'intérieur de student-view) -->
+      <div id="end-screen" class="end-screen hidden">
+        <div class="end-emoji" id="end-emoji">🎉</div>
+        <h2 id="end-title">Paquet terminé !</h2>
+        <p style="color:var(--text-muted); margin-top:8px;" id="end-subtitle"></p>
+        <div class="end-stats">
+          <div class="end-stat ok">
+            <div class="end-stat-num" id="end-ok">0</div>
+            <div class="end-stat-label">✅ Je savais</div>
+          </div>
+          <div class="end-stat ko">
+            <div class="end-stat-num" id="end-ko">0</div>
+            <div class="end-stat-label">❌ À revoir</div>
+          </div>
+        </div>
+        <div class="end-buttons">
+          <button class="btn btn-primary btn-lg" onclick="restartAll()">🔄 Recommencer tout le paquet</button>
+          <button class="btn btn-secondary btn-lg" id="btn-review-wrong" onclick="restartWrong()">❌ Revoir uniquement les incorrectes</button>
+          <button class="btn btn-secondary btn-lg" id="btn-back-to-select" onclick="goBackToStudentSelect()" style="display:none;">← Retour aux paquets de la classe</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       VUE 6 — ERREUR ÉLÈVE (lien invalide / données absentes)
+       ═══════════════════════════════════════════════════════ -->
+  <div id="view-student-error" class="view">
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;
+                min-height:calc(100vh - 64px); padding:32px 20px; text-align:center;">
+      <div style="font-size:4rem; margin-bottom:16px;" id="error-emoji">😕</div>
+      <h2 id="error-title" style="margin-bottom:12px;">Contenu introuvable</h2>
+      <p id="error-msg" style="color:var(--text-muted); font-size:1rem; max-width:360px; line-height:1.6;"></p>
+      <div style="margin-top:32px; background:var(--surface2); border:2px solid var(--border);
+                  border-radius:var(--radius); padding:20px; max-width:400px;">
+        <p style="font-size:0.88rem; color:var(--text-muted); line-height:1.7;">
+          💡 <strong>Que s'est-il passé ?</strong><br>
+          Les données de ton professeur ne sont pas encore disponibles sur cet appareil.
+          Demande-lui de vérifier que l'application est bien à jour sur <strong>flashcards-english.netlify.app</strong>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /#app -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODALES
+     ═══════════════════════════════════════════════════════════ -->
+
+<!-- Modale : Ajouter / renommer dossier ou paquet -->
+<div class="modal-overlay" id="modal-folder">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-folder-title">Nouveau dossier</h2>
+      <button class="btn btn-icon" onclick="closeModal('modal-folder')">✕</button>
+    </div>
+    <label class="label" for="folder-name-input">Nom</label>
+    <input type="text" id="folder-name-input" placeholder="ex : 6ème A, Animaux, Couleurs…" maxlength="50">
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-folder')">Annuler</button>
+      <button class="btn btn-primary" id="modal-folder-confirm">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale : Sélecteur d'images (Pixabay + upload) -->
+<div class="modal-overlay" id="modal-images">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header">
+      <h2>🖼️ Choisir une image</h2>
+      <button class="btn btn-icon" onclick="closeModal('modal-images')">✕</button>
+    </div>
+    <div class="image-search-bar">
+      <input type="text" id="img-search-input" placeholder="Rechercher une image…">
+      <button class="btn btn-primary btn-sm" onclick="searchImages()">🔍 Chercher</button>
+    </div>
+    <p style="font-size:0.82rem; color:var(--text-muted);">Ou importer depuis votre ordinateur :</p>
+    <input type="file" id="img-upload-input" accept="image/*" style="margin-top:6px;" onchange="handleImageUpload(event)">
+    <div id="img-gallery-wrap">
+      <div class="image-gallery" id="img-gallery"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-images')">Annuler</button>
+      <button class="btn btn-primary" onclick="confirmImage()">✅ Choisir cette image</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale : Génération de cartes avec l'IA -->
+<div class="modal-overlay" id="modal-ai">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h2>✨ Générer avec l'IA</h2>
+      <button class="btn btn-icon" onclick="closeModal('modal-ai')">✕</button>
+    </div>
+
+    <!-- Formulaire de génération -->
+    <div id="ai-form">
+      <div style="margin-bottom:16px;">
+        <label class="label" for="ai-theme-input">Thème ou mot-clé</label>
+        <input type="text" id="ai-theme-input"
+          placeholder="ex : la maison, les animaux, les couleurs, food…"
+          maxlength="80"
+          onkeydown="if(event.key==='Enter') generateAICards()">
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;">En français ou en anglais, l'IA comprend les deux.</p>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <label class="label" for="ai-count-input">Nombre de cartes souhaitées</label>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <input type="range" id="ai-count-range" min="5" max="40" value="15"
+            oninput="document.getElementById('ai-count-input').value=this.value"
+            style="flex:1; accent-color:var(--primary);">
+          <input type="number" id="ai-count-input" min="5" max="40" value="15"
+            oninput="document.getElementById('ai-count-range').value=this.value"
+            style="width:70px; text-align:center;">
+        </div>
+      </div>
+
+      <button class="btn btn-ai btn-lg" style="width:100%; justify-content:center;" onclick="generateAICards()">
+        ✨ Générer les cartes
+      </button>
+    </div>
+
+    <!-- Zone de chargement -->
+    <div id="ai-loading" style="display:none; text-align:center; padding:32px 0;">
+      <div class="spinner" style="margin:0 auto 16px;"></div>
+      <p style="font-weight:700; color:var(--primary);" id="ai-loading-text">L'IA génère vos cartes…</p>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-top:6px;">Quelques secondes suffiront ✨</p>
+    </div>
+
+    <!-- Aperçu des cartes générées -->
+    <div id="ai-result" style="display:none;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <p style="font-weight:800; color:var(--success);">✅ <span id="ai-result-count">0</span> cartes générées !</p>
+        <button class="btn btn-secondary btn-sm" onclick="resetAIForm()">🔄 Recommencer</button>
+      </div>
+      <div id="ai-preview-list" style="max-height:300px; overflow-y:auto; border:2px solid var(--border); border-radius:var(--radius-sm); padding:8px;"></div>
+      <div class="modal-footer" style="margin-top:16px;">
+        <button class="btn btn-secondary" onclick="closeModal('modal-ai')">Annuler</button>
+        <button class="btn btn-primary" onclick="confirmAICards()">✅ Ajouter ces cartes au paquet</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modale : Import de liste -->
+<div class="modal-overlay" id="modal-import">
+  <div class="modal" style="max-width:700px;">
+    <div class="modal-header">
+      <h2>📥 Importer une liste</h2>
+      <button class="btn btn-icon" onclick="closeModal('modal-import')">✕</button>
+    </div>
+    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:12px;">Collez vos données (depuis Word, Excel, Google Docs…)</p>
+    <textarea id="import-textarea" rows="7" placeholder="Mot 1&#9;Définition 1&#10;Mot 2&#9;Définition 2&#10;Mot 3&#9;Définition 3" style="font-size:0.9rem; resize:vertical;"></textarea>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:16px;">
+      <div>
+        <p style="font-weight:800; font-size:0.9rem; margin-bottom:8px;">Entre terme et définition :</p>
+        <div class="sep-options" id="sep-term-options">
+          <label class="sep-option active" data-group="term" data-val="tab"><input type="radio" name="sep-term" value="tab" checked> Tab</label>
+          <label class="sep-option" data-group="term" data-val="comma"><input type="radio" name="sep-term" value="comma"> Virgule</label>
+          <label class="sep-option" data-group="term" data-val="custom"><input type="radio" name="sep-term" value="custom"> Autre :</label>
+          <input type="text" id="sep-term-custom" class="sep-custom-input" placeholder="|" maxlength="5" style="width:60px; padding:6px;">
+        </div>
+      </div>
+      <div>
+        <p style="font-weight:800; font-size:0.9rem; margin-bottom:8px;">Entre les cartes :</p>
+        <div class="sep-options" id="sep-card-options">
+          <label class="sep-option active" data-group="card" data-val="newline"><input type="radio" name="sep-card" value="newline" checked> Nouvelle ligne</label>
+          <label class="sep-option" data-group="card" data-val="semicolon"><input type="radio" name="sep-card" value="semicolon"> Point-virgule</label>
+          <label class="sep-option" data-group="card" data-val="custom"><input type="radio" name="sep-card" value="custom"> Autre :</label>
+          <input type="text" id="sep-card-custom" class="sep-custom-input" placeholder="|" maxlength="5" style="width:60px; padding:6px;">
+        </div>
+      </div>
+    </div>
+
+    <div id="import-preview-wrap">
+      <p style="font-weight:800; font-size:0.9rem; margin-top:16px;">Aperçu :</p>
+      <div class="import-preview" id="import-preview"><em style="color:var(--text-muted);">Rien à visualiser pour l'instant</em></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-import')">Annuler</button>
+      <button class="btn btn-primary" onclick="confirmImport()">✅ Importer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale : Transfert de données (export / import) -->
+<div class="modal-overlay" id="modal-transfer">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h2>🔁 Transfert de données</h2>
+      <button class="btn btn-icon" onclick="closeModal('modal-transfer')">✕</button>
+    </div>
+
+    <!-- Onglets -->
+    <div style="display:flex; gap:0; margin-bottom:24px; border-bottom:2px solid var(--border);">
+      <button id="tab-export-btn" onclick="switchTransferTab('export')"
+        style="flex:1; padding:10px; font-family:var(--font-main); font-size:0.95rem; font-weight:700;
+               border:none; background:none; cursor:pointer; border-bottom:3px solid var(--primary);
+               color:var(--primary); margin-bottom:-2px;">
+        📤 Exporter
+      </button>
+      <button id="tab-import-btn" onclick="switchTransferTab('import')"
+        style="flex:1; padding:10px; font-family:var(--font-main); font-size:0.95rem; font-weight:700;
+               border:none; background:none; cursor:pointer; border-bottom:3px solid transparent;
+               color:var(--text-muted); margin-bottom:-2px;">
+        📥 Importer
+      </button>
+    </div>
+
+    <!-- Panneau Export -->
+    <div id="tab-export">
+      <p style="font-size:0.92rem; color:var(--text-muted); margin-bottom:16px; line-height:1.6;">
+        Télécharge un fichier <strong>.json</strong> de sauvegarde de sécurité.<br>
+        ✅ Grâce à Firebase, tes données sont <strong>déjà synchronisées</strong> sur tous les appareils.
+      </p>
+      <div style="background:var(--surface2); border:2px solid var(--border); border-radius:var(--radius-sm); padding:16px; margin-bottom:20px;">
+        <div id="export-summary" style="font-size:0.9rem; font-weight:700; color:var(--text);"></div>
+      </div>
+      <button class="btn btn-primary btn-lg" style="width:100%; justify-content:center;" onclick="exportData()">
+        📤 Télécharger le fichier de sauvegarde
+      </button>
+    </div>
+
+    <!-- Panneau Import -->
+    <div id="tab-import" style="display:none;">
+      <p style="font-size:0.92rem; color:var(--text-muted); margin-bottom:16px; line-height:1.6;">
+        Sélectionne un fichier <strong>.json</strong> exporté depuis une autre instance de l'application.
+      </p>
+      <div style="background:#FFF3CD; border:2px solid #F7C14F; border-radius:var(--radius-sm); padding:14px; margin-bottom:20px;">
+        <p style="font-size:0.85rem; font-weight:700; color:#7A5C00;">
+          ⚠️ Attention : l'import va <u>remplacer</u> toutes les données actuelles.<br>
+          Fais d'abord un export si tu veux garder tes données existantes.
+        </p>
+      </div>
+      <input type="file" id="import-json-input" accept=".json" style="margin-bottom:16px;" onchange="previewImportFile(event)">
+      <div id="import-file-preview" style="display:none; background:var(--surface2); border:2px solid var(--border); border-radius:var(--radius-sm); padding:14px; margin-bottom:16px; font-size:0.9rem;">
+      </div>
+      <button class="btn btn-danger btn-lg" id="btn-confirm-import" style="width:100%; justify-content:center; display:none;" onclick="importData()">
+        📥 Importer et remplacer mes données
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modale : Lien de partage -->
+<div class="modal-overlay" id="modal-share">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>🔗 Lien de partage</h2>
+      <button class="btn btn-icon" onclick="closeModal('modal-share')">✕</button>
+    </div>
+    <p style="font-size:0.9rem; color:var(--text-muted);" id="share-desc">Partagez ce lien avec vos élèves :</p>
+    <div class="share-link-box" id="share-link-box">—</div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-share')">Fermer</button>
+      <button class="btn btn-primary" onclick="copyShareLink()">📋 Copier le lien</button>
+    </div>
+  </div>
+</div>
+
+<!-- Conteneur de toasts -->
+<div id="toast-container"></div>
+
+<!-- Modale : Reprise de session élève -->
+<div class="modal-overlay" id="modal-resume">
+  <div class="modal" style="max-width:460px; text-align:center;">
+    <div style="font-size:2.5rem; margin-bottom:12px;">📖</div>
+    <h2 id="resume-pack-name" style="margin-bottom:6px;"></h2>
+    <p id="resume-date" style="font-size:0.82rem; color:var(--text-muted); margin-bottom:20px;"></p>
+    <p style="font-size:0.95rem; color:var(--text); margin-bottom:24px;">
+      Tu as déjà travaillé ce paquet.<br>Que veux-tu faire ?
+    </p>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <button id="btn-resume-wrong" class="btn btn-primary btn-lg" style="justify-content:center;">
+        ❌ Retravailler les <span id="resume-wrong-count">0</span> cartes non maîtrisées
+      </button>
+      <button id="btn-resume-all" class="btn btn-secondary btn-lg" style="justify-content:center;">
+        🔄 Recommencer tout le paquet (<span id="resume-all-count">0</span> cartes)
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ══════════════════════════════════════════════════════════════════
+   6. VARIABLES GLOBALES
+   ══════════════════════════════════════════════════════════════════ */
+const PIXABAY_KEY = 'VOTRE_CLE_PIXABAY'; // ← ÉTAPE 2 : remplacer par votre clé Pixabay
+const MISTRAL_KEY = 'VOTRE_CLE_MISTRAL'; // ← ÉTAPE 3 : remplacer par votre clé Mistral
+
+// Mot de passe enseignant (stocké en session uniquement, jamais sauvegardé)
+const isTeacherMode = true; // mode enseignant direct, pas de mot de passe
+let isStudentMode = false;
+
+// État de navigation
+let currentView    = 'home';     // 'home' | 'class' | 'editor' | 'student-select' | 'student'
+let currentClassId = null;
+let currentPackId  = null;
+
+// État éditeur
+let editorCards    = [];         // [{fr, en, img}]
+let editorPackId   = null;
+
+// État élève
+let studentCards   = [];         // cartes à réviser (copie)
+let studentIndex   = 0;
+let studentCorrect = 0;
+let studentWrong   = 0;
+let studentIsFlipped = false;
+let wrongCards     = [];         // cartes incorrectes
+let currentStudentKey = null;    // clé localStorage de la session élève courante
+
+// Sélecteur d'images
+let imgTargetCardIndex = null;   // index de la carte pour laquelle on choisit une image
+let imgSelected = null;          // URL ou base64 de l'image sélectionnée
+
+// Mode action modale dossier
+let folderModalMode  = null;     // 'add-class' | 'add-pack' | 'rename-class' | 'rename-pack'
+let folderModalTarget = null;    // id de l'item à renommer
+
+// Séparateurs import
+let sepTerm = 'tab';
+let sepCard = 'newline';
+
+/* ══════════════════════════════════════════════════════════════════
+   7. FIREBASE — INITIALISATION & SYNCHRONISATION TEMPS RÉEL
+   ══════════════════════════════════════════════════════════════════ */
+
+const firebaseConfig = { // ← ÉTAPE 1 : coller ici les valeurs de votre projet Firebase
+  apiKey:            "VOTRE_API_KEY_FIREBASE",
+  authDomain:        "VOTRE_PROJET.firebaseapp.com",
+  databaseURL:       "https://VOTRE_PROJET-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "VOTRE_PROJET",
+  storageBucket:     "VOTRE_PROJET.firebasestorage.app",
+  messagingSenderId: "VOTRE_SENDER_ID",
+  appId:             "VOTRE_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db      = firebase.database();
+const dataRef = db.ref('flashcards');
+let _isSaving = false; // évite les boucles de sync Firebase
+
+/** Indicateur de connexion Firebase dans la topbar (mode prof uniquement) */
+function updateSyncIndicator(status) {
+  if (isStudentMode) return; // invisible en mode élève
+  let el = document.getElementById('sync-indicator');
+  if (!el) {
+    el = document.createElement('span');
+    el.id = 'sync-indicator';
+    el.style.cssText = 'font-size:0.78rem; font-weight:700; padding:4px 10px; border-radius:999px; margin-left:8px; flex-shrink:0;';
+    // S'attacher aux actions de la topbar (pas au logo qui n'existe plus en mode prof)
+    const actions = document.getElementById('topbar-actions');
+    if (actions) actions.appendChild(el);
+  }
+  if (status === 'ok') {
+    el.textContent = '🟢 Sync';
+    el.style.background = '#d4f7e7';
+    el.style.color = '#1a7a4a';
+  } else if (status === 'saving') {
+    el.textContent = '🔄 Sync…';
+    el.style.background = '#fff3cd';
+    el.style.color = '#7a5c00';
+  } else {
+    el.textContent = '🔴 Hors ligne';
+    el.style.background = '#fde8ec';
+    el.style.color = '#a0001a';
+  }
+}
+
+/** Écoute les changements Firebase en temps réel */
+function initFirebaseSync() {
+
+  // ══ BACKUP GARANTI ══ (utilisé si Firebase et localStorage sont vides)
+  const BACKUP = {"classes":[]};
+
+  // ── Détecter si mode élève (lien partagé) ──
+  const params    = new URLSearchParams(window.location.search);
+  const isStudent = !!params.get('classId');
+
+  if (!isStudent) {
+    // ── MODE PROF/VISITEUR : afficher login IMMÉDIATEMENT ──
+    const existing = loadData();
+    if (!existing.classes || existing.classes.length === 0) {
+      localStorage.setItem('flashcards_data', JSON.stringify(BACKUP));
+    }
+    showView('home');
+  } else {
+    // ── MODE ÉLÈVE : afficher spinner et attendre Firebase ──
+    showStudentLoading();
+  }
+
+  // ── Indicateur de connexion ──
+  db.ref('.info/connected').on('value', snap => {
+    updateSyncIndicator(snap.val() ? 'ok' : 'offline');
+  });
+
+  // ── Écouter Firebase en temps réel ──
+  let firstLoad = true;
+  dataRef.on('value', snap => {
+    if (_isSaving) return;
+    const val = snap.val();
+
+    if (firstLoad) {
+      firstLoad = false;
+
+      if (val && val.classes) {
+        // Firebase a des données → mettre à jour localStorage
+        localStorage.setItem('flashcards_data', JSON.stringify(val));
+      } else if (isTeacherMode) {
+        // Firebase vide + mode enseignant connecté → envoyer données locales
+        const local = loadData();
+        if (local.classes && local.classes.length > 0) {
+          _isSaving = true;
+          const t = setTimeout(() => { _isSaving = false; }, 3000);
+          dataRef.set(local).then(() => { clearTimeout(t); _isSaving = false; updateSyncIndicator('ok'); });
+        }
+      }
+      // ⚠️ Ne JAMAIS envoyer le backup vers Firebase automatiquement
+
+      if (isStudent) {
+        // Élève : démarrer maintenant que Firebase a répondu
+        hideStudentLoading();
+        handleURLParams();
+      } else {
+        // Prof/visiteur : rafraîchir si déjà sur la vue home
+        if (currentView === 'home') renderClassGrid();
+      }
+
+    } else if (val) {
+      // Mise à jour temps réel depuis un autre appareil
+      localStorage.setItem('flashcards_data', JSON.stringify(val));
+      refreshCurrentView();
+    }
+  }, err => {
+    console.error('Firebase error:', err);
+    updateSyncIndicator('offline');
+    if (firstLoad) {
+      firstLoad = false;
+      if (isStudent) {
+        hideStudentLoading();
+        handleURLParams(); // Fallback localStorage pour l'élève
+      }
+    }
+  });
+}
+
+/** Affiche un écran de chargement pour l'élève en attendant Firebase */
+function showStudentLoading() {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  // Afficher un spinner centré
+  const div = document.createElement('div');
+  div.id = 'student-loading-screen';
+  div.style.cssText = `
+    position:fixed; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; background:var(--bg);
+    z-index:500; gap:16px;`;
+  div.innerHTML = `
+    <div class="spinner"></div>
+    <p style="font-weight:700; color:var(--primary); font-size:1rem;">Chargement des flashcards…</p>`;
+  document.body.appendChild(div);
+}
+
+/** Supprime l'écran de chargement élève */
+function hideStudentLoading() {
+  const el = document.getElementById('student-loading-screen');
+  if (el) el.remove();
+}
+
+/** Rafraîchit la vue courante quand Firebase reçoit une mise à jour */
+function refreshCurrentView() {
+  const data = loadData();
+  switch (currentView) {
+    case 'home':
+      renderClassGrid();
+      break;
+    case 'class': {
+      const cls = findClass(data, currentClassId);
+      if (cls) {
+        document.getElementById('class-title').textContent = cls.name;
+        renderPackGrid(cls);
+      }
+      break;
+    }
+    case 'editor':
+      toast('🔄 Données mises à jour sur un autre appareil', '');
+      break;
+    case 'student':
+    case 'student-select':
+      break;
+  }
+}
+
+/** Sauvegarde — Firebase si enseignant, localStorage uniquement si visiteur */
+function saveData(data) {
+  // ── Protection des images : ne jamais écraser une image existante avec vide ──
+  const existing = loadData();
+  if (existing && existing.classes) {
+    (data.classes || []).forEach(cls => {
+      const exCls = existing.classes.find(c => c.id === cls.id);
+      if (!exCls) return;
+      (cls.packs || []).forEach(pack => {
+        const exPack = (exCls.packs || []).find(p => p.id === pack.id);
+        if (!exPack) return;
+        (pack.cards || []).forEach(card => {
+          if (!card.img) {
+            const exCard = (exPack.cards || []).find(c => c.id === card.id);
+            if (exCard && exCard.img) card.img = exCard.img; // restaurer l'image
+          }
+        });
+      });
+    });
+  }
+
+  // Sauvegarder en localStorage (immédiat)
+  localStorage.setItem('flashcards_data', JSON.stringify(data));
+
+  if (!isTeacherMode) {
+    updateSyncIndicator('offline');
+    return;
+  }
+
+  // Mode enseignant : sync Firebase
+  updateSyncIndicator('saving');
+  _isSaving = true;
+  const timeout = setTimeout(() => { _isSaving = false; }, 3000);
+  dataRef.set(data)
+    .then(() => { clearTimeout(timeout); _isSaving = false; updateSyncIndicator('ok'); refreshCurrentView(); })
+    .catch(() => { clearTimeout(timeout); _isSaving = false; updateSyncIndicator('offline'); });
+}
+
+/** Charge les données depuis localStorage (toujours frais, jamais de cache mémoire) */
+function loadData() {
+  const raw = localStorage.getItem('flashcards_data');
+  if (!raw) return { classes: [] };
+  try { return JSON.parse(raw); } catch { return { classes: [] }; }
+}
+
+/* ── Stockage élève (progression par paquet — reste local) ── */
+
+/** Sauvegarde la progression de l'élève (cartes incorrectes) */
+function saveStudentProgress() {
+  if (!currentStudentKey) return;
+  const wrongIds = wrongCards.map(c => c.id).filter(Boolean);
+  localStorage.setItem(currentStudentKey, JSON.stringify({
+    wrongIds,
+    date: Date.now()
+  }));
+}
+
+/** Charge la progression sauvegardée d'un élève */
+function loadStudentProgress(key) {
+  const raw = localStorage.getItem(key);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+}
+
+/** Efface la progression d'un élève pour la session courante */
+function clearStudentProgress() {
+  if (currentStudentKey) localStorage.removeItem(currentStudentKey);
+}
+
+/** Génère un identifiant unique */
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+/** Trouve une classe par son id */
+function findClass(data, classId) {
+  return data.classes.find(c => c.id === classId) || null;
+}
+
+/** Trouve un paquet dans une classe */
+function findPack(classObj, packId) {
+  return (classObj.packs || []).find(p => p.id === packId) || null;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   8. LOGIQUE DE NAVIGATION ENTRE VUES
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Affiche une vue, cache les autres */
+function showView(viewName) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const el = document.getElementById('view-' + viewName);
+  if (el) el.classList.add('active');
+  currentView = viewName;
+  updateTopbar();
+  // Mettre à jour le bouton retour en mode élève
+  if (isStudentMode) updateStudentTopbar(viewName);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SYSTÈME DE MOT DE PASSE — ACCÈS ENSEIGNANT
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Vérifie le mot de passe */
+
+
+
+function lockTeacherMode() {
+  toast('🔒 Interface verrouillée', '');
+}
+
+/** Affiche la vue login */
+function showLoginView() {
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-error').style.display = 'none';
+  showView('home');
+}
+
+/** Retour à l'accueil (adapté selon le mode) */
+function goHome() {
+  currentClassId = null;
+  currentPackId  = null;
+  renderClassGrid();
+  showView('home');
+}
+
+/** Ouvre un dossier classe */
+function openClass(classId) {
+  currentClassId = classId;
+  const data = loadData();
+  const cls  = findClass(data, classId);
+  if (!cls) return;
+  document.getElementById('class-title').textContent = cls.name;
+  renderPackGrid(cls);
+  showView('class');
+}
+
+/** Ouvre l'éditeur d'un paquet */
+function openEditor(classId, packId) {
+  currentClassId = classId;
+  currentPackId  = packId;
+  const data  = loadData();
+  const cls   = findClass(data, classId);
+  if (!cls) return;
+  const pack  = findPack(cls, packId);
+  if (!pack) return;
+  editorPackId = packId;
+  editorCards  = JSON.parse(JSON.stringify(pack.cards || []));
+  document.getElementById('editor-pack-title').innerHTML = packSVG().replace('width:72px;height:72px', 'width:32px;height:32px') + ' ' + pack.name;
+  renderCardEditor();
+  showView('editor');
+}
+
+/** Met à jour la topbar (breadcrumb + actions) */
+function updateTopbar() {
+  const bc   = document.getElementById('breadcrumb');
+  const acts = document.getElementById('topbar-actions');
+  const data = loadData();
+  bc.innerHTML   = '';
+  acts.innerHTML = '';
+
+  if (currentView === 'home') {
+    bc.innerHTML = '<span>🏠 Accueil</span>';
+  } else if (currentView === 'class') {
+    const cls = findClass(data, currentClassId);
+    bc.innerHTML = `<span class="crumb" onclick="goHome()">🏠 Accueil</span>
+      <span class="sep">›</span>
+      <span>${cls ? cls.name : ''}</span>`;
+  } else if (currentView === 'editor') {
+    const cls  = findClass(data, currentClassId);
+    const pack = cls ? findPack(cls, currentPackId) : null;
+    bc.innerHTML = `<span class="crumb" onclick="goHome()">🏠 Accueil</span>
+      <span class="sep">›</span>
+      <span class="crumb" onclick="openClass('${currentClassId}')">${cls ? cls.name : ''}</span>
+      <span class="sep">›</span>
+      <span>${pack ? pack.name : ''}</span>`;
+  } else if (currentView === 'student' || currentView === 'student-select') {
+    bc.innerHTML = '<span>📚 Mode révision élève</span>';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   9. INTERFACE ENSEIGNANT — DOSSIERS & PAQUETS
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Palette de couleurs pour les classes */
+const CLASS_COLORS = ['#4F6EF7','#F76F4F','#27C97A','#F7C14F','#B04FF7','#4FC6F7','#F74F9A','#7AC97A'];
+
+/** SVG paquet de cartes — 4 cartes éventail dynamique */
+function packSVG() {
+  return `<svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg" style="width:72px;height:72px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.35));">
+    <defs>
+      <filter id="cs"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.35"/></filter>
+    </defs>
+    <!-- Carte 1 (arrière, pique) -->
+    <g transform="rotate(-28,44,52)" filter="url(#cs)">
+      <rect x="18" y="14" width="34" height="46" rx="4" fill="#fff" opacity="0.75"/>
+      <text x="35" y="43" text-anchor="middle" font-size="16" fill="#1a1a2e" opacity="0.75">♠</text>
+    </g>
+    <!-- Carte 2 (carreau) -->
+    <g transform="rotate(-12,44,52)" filter="url(#cs)">
+      <rect x="18" y="12" width="34" height="46" rx="4" fill="#fff" opacity="0.88"/>
+      <text x="35" y="42" text-anchor="middle" font-size="16" fill="#e74c3c" opacity="0.88">♦</text>
+    </g>
+    <!-- Carte 3 (trèfle) -->
+    <g transform="rotate(6,44,52)" filter="url(#cs)">
+      <rect x="18" y="10" width="34" height="46" rx="4" fill="#fff" opacity="0.94"/>
+      <text x="35" y="40" text-anchor="middle" font-size="16" fill="#1a1a2e" opacity="0.94">♣</text>
+    </g>
+    <!-- Carte 4 (cœur, avant) -->
+    <g transform="rotate(22,44,52)" filter="url(#cs)">
+      <rect x="18" y="8" width="34" height="46" rx="4" fill="#fff"/>
+      <text x="22" y="22" font-size="8" fill="#e74c3c" font-weight="bold">A</text>
+      <text x="35" y="38" text-anchor="middle" font-size="20" fill="#e74c3c">♥</text>
+      <text x="48" y="50" font-size="8" fill="#e74c3c" font-weight="bold" transform="rotate(180,48,50)">A</text>
+    </g>
+  </svg>`;
+}
+
+/** SVG cahiers multiples pour la grille des classes */
+function notebooksSVG(color) {
+  const c2 = color + 'bb';
+  const c3 = color + '77';
+  return `<svg viewBox="0 0 88 80" xmlns="http://www.w3.org/2000/svg" style="width:68px;height:68px;filter:drop-shadow(0 3px 10px rgba(0,0,0,0.28));">
+    <!-- Cahier 3 (arrière-gauche) -->
+    <g transform="rotate(-14,44,40)">
+      <rect x="10" y="10" width="42" height="54" rx="4" fill="${c3}"/>
+      <rect x="10" y="10" width="7" height="54" rx="3" fill="${c3}" opacity="0.7"/>
+      <line x1="20" y1="24" x2="48" y2="24" stroke="white" stroke-width="1.5" opacity="0.4"/>
+      <line x1="20" y1="32" x2="48" y2="32" stroke="white" stroke-width="1.5" opacity="0.4"/>
+      <line x1="20" y1="40" x2="48" y2="40" stroke="white" stroke-width="1.5" opacity="0.4"/>
+    </g>
+    <!-- Cahier 2 (milieu) -->
+    <g transform="rotate(-2,44,40)">
+      <rect x="16" y="8" width="42" height="54" rx="4" fill="${c2}"/>
+      <rect x="16" y="8" width="7" height="54" rx="3" fill="${c2}" opacity="0.7"/>
+      <line x1="27" y1="22" x2="54" y2="22" stroke="white" stroke-width="1.5" opacity="0.5"/>
+      <line x1="27" y1="30" x2="54" y2="30" stroke="white" stroke-width="1.5" opacity="0.5"/>
+      <line x1="27" y1="38" x2="54" y2="38" stroke="white" stroke-width="1.5" opacity="0.5"/>
+      <line x1="27" y1="46" x2="54" y2="46" stroke="white" stroke-width="1.5" opacity="0.5"/>
+    </g>
+    <!-- Cahier 1 (avant-droite) -->
+    <g transform="rotate(12,44,40)">
+      <rect x="22" y="6" width="42" height="54" rx="4" fill="${color}"/>
+      <rect x="22" y="6" width="7" height="54" rx="3" fill="${color}" opacity="0.6"/>
+      <line x1="33" y1="20" x2="60" y2="20" stroke="white" stroke-width="2" opacity="0.65"/>
+      <line x1="33" y1="29" x2="60" y2="29" stroke="white" stroke-width="2" opacity="0.65"/>
+      <line x1="33" y1="38" x2="60" y2="38" stroke="white" stroke-width="2" opacity="0.65"/>
+      <line x1="33" y1="47" x2="60" y2="47" stroke="white" stroke-width="2" opacity="0.65"/>
+    </g>
+  </svg>`;
+}
+
+/** Rendu de la grille des classes */
+function renderClassGrid() {
+  const data = loadData();
+  const grid = document.getElementById('classes-grid');
+  grid.innerHTML = '';
+
+
+
+  (data.classes || []).forEach((cls, i) => {
+    const color = CLASS_COLORS[i % CLASS_COLORS.length];
+    const card  = document.createElement('div');
+    card.className = 'folder-card';
+    card.innerHTML = `
+      <div class="folder-card-thumb" style="background:linear-gradient(135deg,${color}44,${color}99);">
+        ${notebooksSVG(color)}
+      </div>
+      <div class="folder-card-body">
+        <div class="folder-card-name">${cls.name}</div>
+        <div class="folder-card-meta">${(cls.packs || []).length} paquet(s)</div>
+      </div>
+      ${isTeacherMode ? `
+      <div class="folder-card-actions">
+        <button class="folder-card-btn edit" onclick="event.stopPropagation(); renameClass('${cls.id}')" title="Renommer">✏️</button>
+        <button class="folder-card-btn del"  onclick="event.stopPropagation(); deleteClass('${cls.id}')" title="Supprimer">🗑️</button>
+      </div>` : ''}
+      <div class="class-badge" style="background:${color};"></div>
+    `;
+    card.addEventListener('click', () => openClass(cls.id));
+    grid.appendChild(card);
+  });
+
+  // Carte "Ajouter" — uniquement en mode enseignant
+  if (isTeacherMode) {
+    const addCard = document.createElement('div');
+    addCard.className = 'folder-card folder-card-add';
+    addCard.innerHTML = `<div class="add-icon">➕</div><div class="add-label">Nouvelle classe</div>`;
+    addCard.onclick = () => showAddFolderModal('class');
+    grid.appendChild(addCard);
+  }
+}
+
+/** Rendu de la grille des paquets d'une classe */
+function renderPackGrid(cls) {
+  const grid = document.getElementById('packs-grid');
+  grid.innerHTML = '';
+
+  (cls.packs || []).forEach((pack, i) => {
+    const color = CLASS_COLORS[(i + 2) % CLASS_COLORS.length];
+    const card  = document.createElement('div');
+    card.className = 'folder-card';
+    card.innerHTML = `
+      <div class="folder-card-thumb" style="background:linear-gradient(135deg,#1a1a2e,#2d2d4e);">
+        ${packSVG()}
+      </div>
+      <div class="folder-card-body">
+        <div class="folder-card-name">${pack.name}</div>
+        <div class="folder-card-meta">${(pack.cards || []).length} carte(s)</div>
+      </div>
+      ${isTeacherMode ? `
+      <div class="folder-card-actions">
+        <button class="folder-card-btn edit" onclick="event.stopPropagation(); renamePack('${pack.id}')" title="Renommer">✏️</button>
+        <button class="folder-card-btn del" onclick="event.stopPropagation(); deletePack('${pack.id}')" title="Supprimer">🗑️</button>
+      </div>` : ''}
+      <div class="class-badge" style="background:${color};"></div>
+    `;
+    // Visiteur ET enseignant peuvent ouvrir le paquet
+    card.addEventListener('click', () => openEditor(cls.id, pack.id));
+    grid.appendChild(card);
+  });
+
+  // Carte "Ajouter" — uniquement en mode enseignant
+  if (isTeacherMode) {
+    const addCard = document.createElement('div');
+    addCard.className = 'folder-card folder-card-add';
+    addCard.innerHTML = `<div class="add-icon">➕</div><div class="add-label">Nouveau paquet</div>`;
+    addCard.onclick = () => showAddFolderModal('pack');
+    grid.appendChild(addCard);
+  }
+}
+
+/** Ajouter une classe */
+function addClass(name) {
+  const data = loadData();
+  const i    = data.classes.length;
+  data.classes.push({
+    id: uid(),
+    name,
+    color: CLASS_COLORS[i % CLASS_COLORS.length],
+    packs: []
+  });
+  saveData(data);
+  renderClassGrid();
+}
+
+/** Supprimer une classe */
+function deleteClass(classId) {
+  if (!confirm('Supprimer cette classe et tous ses paquets ?')) return;
+  const data = loadData();
+  data.classes = data.classes.filter(c => c.id !== classId);
+  saveData(data);
+  renderClassGrid();
+  toast('Classe supprimée', 'success');
+}
+
+/** Renommer une classe */
+function renameClass(classId) {
+  const data = loadData();
+  const cls  = findClass(data, classId);
+  if (!cls) return;
+  folderModalMode   = 'rename-class';
+  folderModalTarget = classId;
+  document.getElementById('modal-folder-title').textContent = 'Renommer la classe';
+  document.getElementById('folder-name-input').value = cls.name;
+  document.getElementById('modal-folder-confirm').textContent = 'Renommer';
+  openModal('modal-folder');
+}
+
+/** Ajouter un paquet dans la classe courante */
+function addPack(name) {
+  const data = loadData();
+  const cls  = findClass(data, currentClassId);
+  if (!cls) return;
+  if (!cls.packs) cls.packs = [];
+  cls.packs.push({ id: uid(), name, emoji: '🃏', cards: [] });
+  saveData(data);
+  renderPackGrid(cls);
+}
+
+/** Supprimer un paquet */
+function deletePack(packId) {
+  if (!confirm('Supprimer ce paquet et toutes ses cartes ?')) return;
+  const data = loadData();
+  const cls  = findClass(data, currentClassId);
+  if (!cls) return;
+  cls.packs = (cls.packs || []).filter(p => p.id !== packId);
+  saveData(data);
+  renderPackGrid(cls);
+  toast('Paquet supprimé', 'success');
+}
+
+/** Renommer un paquet */
+function renamePack(packId) {
+  const data = loadData();
+  const cls  = findClass(data, currentClassId);
+  const pack = cls ? findPack(cls, packId) : null;
+  if (!pack) return;
+  folderModalMode   = 'rename-pack';
+  folderModalTarget = packId;
+  document.getElementById('modal-folder-title').textContent = 'Renommer le paquet';
+  document.getElementById('folder-name-input').value = pack.name;
+  document.getElementById('modal-folder-confirm').textContent = 'Renommer';
+  openModal('modal-folder');
+}
+
+/** Affiche la modale d'ajout de dossier */
+function showAddFolderModal(type) {
+  folderModalMode   = 'add-' + type;
+  folderModalTarget = null;
+  const label = type === 'class' ? 'classe' : 'paquet';
+  document.getElementById('modal-folder-title').textContent = `Nouvelle ${label}`;
+  document.getElementById('folder-name-input').value = '';
+  document.getElementById('modal-folder-confirm').textContent = 'Créer';
+  openModal('modal-folder');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   10. CRÉATION ET ÉDITION DE CARTES
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Rendu de la liste des cartes dans l'éditeur */
+function renderCardEditor() {
+  const list = document.getElementById('card-editor-list');
+  list.innerHTML = '';
+
+  if (editorCards.length === 0) {
+    addNewCard();
+    return;
+  }
+
+  editorCards.forEach((card, i) => {
+    const item = document.createElement('div');
+    item.className = 'card-editor-item';
+    item.dataset.index = i;
+
+    // Numéro
+    const num = document.createElement('div');
+    num.className = 'card-num';
+    num.textContent = i + 1;
+
+    // Champ Français
+    const wrapFr = document.createElement('div');
+    const lblFr  = document.createElement('label');
+    lblFr.className = 'label';
+    lblFr.textContent = '🇫🇷 Mot français';
+    const inputFr = document.createElement('input');
+    inputFr.type = 'text';
+    inputFr.className = 'card-input-fr';
+    inputFr.placeholder = 'ex : un chat';
+    inputFr.value = card.fr || '';
+    inputFr.addEventListener('input', () => { editorCards[i].fr = inputFr.value; });
+    wrapFr.appendChild(lblFr);
+    wrapFr.appendChild(inputFr);
+
+    // Champ Anglais
+    const wrapEn = document.createElement('div');
+    const lblEn  = document.createElement('label');
+    lblEn.className = 'label';
+    lblEn.textContent = '🇬🇧 Traduction anglaise';
+    const inputEn = document.createElement('input');
+    inputEn.type = 'text';
+    inputEn.className = 'card-input-en';
+    inputEn.placeholder = 'ex : a cat';
+    inputEn.value = card.en || '';
+    inputEn.addEventListener('input', () => { editorCards[i].en = inputEn.value; });
+    wrapEn.appendChild(lblEn);
+    wrapEn.appendChild(inputEn);
+
+    // Vignette image
+    const thumb = document.createElement('div');
+    thumb.className = 'card-image-thumb';
+    thumb.title = 'Cliquer pour choisir une image';
+    thumb.style.position = 'relative';
+    if (card.img) {
+      const img = document.createElement('img');
+      img.src = card.img;
+      img.alt = 'image';
+      thumb.appendChild(img);
+      // Bouton ✕ supprimer l'image
+      const delImg = document.createElement('button');
+      delImg.innerHTML = '✕';
+      delImg.title = 'Supprimer l\'image';
+      delImg.style.cssText = 'position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:var(--danger);color:#fff;border:none;cursor:pointer;font-size:0.7rem;font-weight:900;z-index:2;display:flex;align-items:center;justify-content:center;';
+      delImg.addEventListener('click', e => {
+        e.stopPropagation();
+        editorCards[i].img = '';
+        renderCardEditor();
+      });
+      thumb.appendChild(delImg);
+    } else {
+      thumb.innerHTML = '<span>🖼️</span><span class="img-label">Image</span>';
+    }
+    thumb.addEventListener('click', () => openImageModal(i));
+
+    // Bouton supprimer
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-icon-del';
+    delBtn.title = 'Supprimer cette carte';
+    delBtn.textContent = '🗑️';
+    delBtn.addEventListener('click', () => deleteCard(i));
+
+    item.appendChild(num);
+    item.appendChild(wrapFr);
+    item.appendChild(wrapEn);
+    item.appendChild(thumb);
+    item.appendChild(delBtn);
+    list.appendChild(item);
+  });
+}
+
+/** Ajoute une nouvelle carte vide */
+function addNewCard() {
+  editorCards.push({ id: uid(), fr: '', en: '', img: '' });
+  renderCardEditor();
+  setTimeout(() => {
+    const list = document.getElementById('card-editor-list');
+    list.lastElementChild && list.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 80);
+}
+
+/** Met à jour le champ d'une carte */
+function updateCard(index, field, value) {
+  if (editorCards[index]) editorCards[index][field] = value;
+}
+
+/** Supprime une carte */
+function deleteCard(index) {
+  editorCards.splice(index, 1);
+  renderCardEditor();
+}
+
+/** Sauvegarde le paquet et revient à la vue classe */
+function savePackAndGoBack() {
+  const valid = editorCards.filter(c => (c.fr || '').trim() || (c.en || '').trim());
+  // S'assurer que chaque carte a un identifiant unique (pour le suivi élève)
+  valid.forEach(c => { if (!c.id) c.id = uid(); });
+
+  const data  = loadData();
+  const cls   = findClass(data, currentClassId);
+  if (!cls) return;
+  const pack  = findPack(cls, currentPackId);
+  if (!pack) return;
+  pack.cards  = valid;
+  saveData(data);
+  toast(`💾 Paquet enregistré (${valid.length} cartes)`, 'success');
+  openClass(currentClassId);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   11. IMPORT DE LISTE
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Affiche la modale d'import */
+function showImportModal() {
+  document.getElementById('import-textarea').value = '';
+  document.getElementById('import-preview').innerHTML = '<em style="color:var(--text-muted);">Rien à visualiser pour l\'instant</em>';
+  openModal('modal-import');
+}
+
+/** Calcule les séparateurs actifs */
+function getSeps() {
+  const termVal  = document.querySelector('input[name="sep-term"]:checked')?.value || 'tab';
+  const cardVal  = document.querySelector('input[name="sep-card"]:checked')?.value || 'newline';
+  const termSep  = termVal === 'tab'  ? '\t'
+                 : termVal === 'comma'? ','
+                 : document.getElementById('sep-term-custom').value || '\t';
+  const cardSep  = cardVal === 'newline'  ? '\n'
+                 : cardVal === 'semicolon' ? ';'
+                 : document.getElementById('sep-card-custom').value || '\n';
+  return { termSep, cardSep };
+}
+
+/** Parse le texte importé */
+function parseImportText(text, termSep, cardSep) {
+  const rows = text.split(cardSep).map(r => r.trim()).filter(Boolean);
+  return rows.map(row => {
+    const idx = row.indexOf(termSep);
+    if (idx === -1) return { fr: row.trim(), en: '' };
+    return { fr: row.slice(0, idx).trim(), en: row.slice(idx + termSep.length).trim(), img: '' };
+  });
+}
+
+/** Mise à jour de l'aperçu d'import */
+function updateImportPreview() {
+  const text = document.getElementById('import-textarea').value;
+  const { termSep, cardSep } = getSeps();
+  const cards = parseImportText(text, termSep, cardSep);
+  const preview = document.getElementById('import-preview');
+  if (cards.length === 0) {
+    preview.innerHTML = '<em style="color:var(--text-muted);">Rien à visualiser pour l\'instant</em>';
+    return;
+  }
+  preview.innerHTML = cards.slice(0, 20).map(c =>
+    `<div class="import-preview-row">
+       <span class="import-preview-fr">${escHtml(c.fr)}</span>
+       <span class="import-preview-en">${escHtml(c.en)}</span>
+     </div>`
+  ).join('') + (cards.length > 20 ? `<div style="color:var(--text-muted);font-size:0.8rem;padding:6px;">… et ${cards.length - 20} de plus</div>` : '');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   11b. GÉNÉRATION DE CARTES AVEC L'IA (API Anthropic)
+   ══════════════════════════════════════════════════════════════════ */
+
+let aiGeneratedCards = []; // cartes générées par l'IA en attente de confirmation
+
+/** Affiche la modale de génération IA */
+function showAIModal() {
+  resetAIForm();
+  openModal('modal-ai');
+}
+
+/** Remet le formulaire IA à zéro */
+function resetAIForm() {
+  document.getElementById('ai-form').style.display    = '';
+  document.getElementById('ai-loading').style.display = 'none';
+  document.getElementById('ai-result').style.display  = 'none';
+  document.getElementById('ai-theme-input').value     = '';
+  document.getElementById('ai-count-input').value     = '15';
+  document.getElementById('ai-count-range').value     = '15';
+  aiGeneratedCards = [];
+}
+
+/** Lance la génération de cartes via Claude */
+async function generateAICards() {
+  const theme = document.getElementById('ai-theme-input').value.trim();
+  const count = parseInt(document.getElementById('ai-count-input').value) || 15;
+
+  if (!theme) {
+    toast('Entre un thème pour générer des cartes', 'error');
+    document.getElementById('ai-theme-input').focus();
+    return;
+  }
+
+  // Afficher le chargement
+  document.getElementById('ai-form').style.display    = 'none';
+  document.getElementById('ai-loading').style.display = '';
+  document.getElementById('ai-result').style.display  = 'none';
+
+  const messages = [
+    {
+      role: 'user',
+      content: `Tu es un assistant pédagogique spécialisé en apprentissage du vocabulaire anglais pour des élèves français.
+
+Génère exactement ${count} cartes de vocabulaire français-anglais sur le thème : "${theme}".
+
+RÈGLES STRICTES :
+- Chaque carte = un mot ou une courte expression (pas de phrases)
+- Le français doit inclure l'article (un, une, le, la, les, des...)
+- L'anglais doit inclure l'article si nécessaire (a, an, the...)
+- Vocabulaire concret, visuel, adapté au collège/lycée
+- Pas de doublons
+- Variété : objets, actions, qualificatifs liés au thème
+
+Réponds UNIQUEMENT avec un tableau JSON valide, sans texte avant ni après, sans balises markdown :
+[
+  {"fr": "un toit", "en": "a roof"},
+  {"fr": "une chambre", "en": "a bedroom"}
+]`
+    }
+  ];
+
+  // Animation du texte de chargement (déclaré avant try pour être accessible dans catch)
+  const loadingTexts = [
+    'L\'IA réfléchit au thème…',
+    'Génération du vocabulaire…',
+    'Création des cartes en cours…',
+    'Presque terminé…'
+  ];
+  let ltIdx = 0;
+  let ltInterval = setInterval(() => {
+    ltIdx = (ltIdx + 1) % loadingTexts.length;
+    const el = document.getElementById('ai-loading-text');
+    if (el) el.textContent = loadingTexts[ltIdx];
+  }, 1200);
+
+  try {
+
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${MISTRAL_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'mistral-small-latest',
+        messages: [{ role: 'user', content: messages[0].content }],
+        temperature: 0.7,
+        max_tokens: 2048
+      })
+    });
+
+    clearInterval(ltInterval);
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(`HTTP ${response.status} — ${errData?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Extraire le texte de la réponse Mistral
+    const rawText = data?.choices?.[0]?.message?.content || '';
+    if (!rawText) throw new Error('Réponse vide de l\'IA');
+
+    // Parser le JSON (nettoyer les éventuelles balises markdown)
+    const clean = rawText.replace(/```json|```/g, '').trim();
+    const cards = JSON.parse(clean);
+
+    if (!Array.isArray(cards) || cards.length === 0) throw new Error('Réponse invalide');
+
+    // Ajouter des IDs uniques
+    aiGeneratedCards = cards.map(c => ({ id: uid(), fr: c.fr || '', en: c.en || '', img: '' }));
+
+    // Afficher l'aperçu
+    document.getElementById('ai-loading').style.display = 'none';
+    document.getElementById('ai-result').style.display  = '';
+    document.getElementById('ai-result-count').textContent = aiGeneratedCards.length;
+
+    const previewList = document.getElementById('ai-preview-list');
+    previewList.innerHTML = aiGeneratedCards.map((c, i) => `
+      <div style="display:flex; align-items:center; gap:12px; padding:8px 10px;
+                  border-bottom:1px solid var(--border); font-size:0.9rem;"
+           class="${i % 2 === 0 ? '' : ''}">
+        <span style="color:var(--text-muted); font-weight:700; min-width:24px;">${i + 1}</span>
+        <span style="color:var(--primary); font-weight:700; min-width:140px;">${escHtml(c.fr)}</span>
+        <span style="color:var(--text-muted);">→</span>
+        <span style="font-weight:600;">${escHtml(c.en)}</span>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    clearInterval(ltInterval);
+    document.getElementById('ai-loading').style.display = 'none';
+    document.getElementById('ai-form').style.display    = '';
+    const msg = err.message || 'Erreur inconnue';
+    toast(`❌ ${msg}`, 'error');
+    console.error('AI generation error:', err);
+  }
+}
+
+/** Ajoute les cartes générées par l'IA au paquet courant */
+function confirmAICards() {
+  if (aiGeneratedCards.length === 0) return;
+  editorCards.push(...aiGeneratedCards);
+  closeModal('modal-ai');
+  renderCardEditor();
+  toast(`✨ ${aiGeneratedCards.length} cartes ajoutées au paquet !`, 'success');
+  aiGeneratedCards = [];
+}
+function confirmImport() {
+  const text = document.getElementById('import-textarea').value.trim();
+  if (!text) { toast('Collez du texte avant d\'importer', 'error'); return; }
+  const { termSep, cardSep } = getSeps();
+  const cards = parseImportText(text, termSep, cardSep);
+  if (cards.length === 0) { toast('Aucune carte détectée', 'error'); return; }
+  // Ajouter un id unique à chaque carte importée
+  cards.forEach(c => { c.id = uid(); });
+  editorCards.push(...cards);
+  closeModal('modal-import');
+  renderCardEditor();
+  toast(`✅ ${cards.length} carte(s) importée(s)`, 'success');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   12. RECHERCHE D'IMAGES (Pixabay API + upload)
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Ouvre la modale d'images pour une carte */
+function openImageModal(cardIndex) {
+  imgTargetCardIndex = cardIndex;
+  imgSelected        = null;
+  document.getElementById('img-gallery').innerHTML = '';
+  const card = editorCards[cardIndex];
+  // Chercher en priorité avec le mot ANGLAIS (bien plus pertinent sur Pixabay)
+  const hint = (card && (card.en || card.fr)) || '';
+  document.getElementById('img-search-input').value = hint;
+  openModal('modal-images');
+  if (hint) searchImages();
+}
+
+/** Recherche d'images via Pixabay — optimisée pour la pertinence */
+async function searchImages() {
+  const rawQuery = document.getElementById('img-search-input').value.trim();
+  if (!rawQuery) return;
+  const gallery  = document.getElementById('img-gallery');
+  gallery.innerHTML = '<div class="spinner"></div>';
+
+  // Nettoyer la requête : retirer articles/prépositions FR courants pour garder le mot-clé
+  const stopwordsFR = ['un','une','des','le','la','les','de','du','d\'','l\'',
+                       'en','au','aux','mon','ma','mes','ce','cet','cette'];
+  let query = rawQuery.toLowerCase();
+  stopwordsFR.forEach(sw => {
+    query = query.replace(new RegExp(`^${sw}\\s+|\\s+${sw}\\s+`, 'g'), ' ');
+  });
+  query = query.trim();
+
+  try {
+    // Priorité 1 : recherche en anglais (meilleure couverture Pixabay)
+    const urlEN = `https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${encodeURIComponent(query)}&image_type=photo&per_page=24&safesearch=true&order=popular&lang=en&orientation=all`;
+    let resp = await fetch(urlEN);
+    let json = await resp.json();
+
+    // Priorité 2 : si pas assez de résultats, essayer le mot français original
+    if (!json.hits || json.hits.length < 4) {
+      const urlFR = `https://pixabay.com/api/?key=${PIXABAY_KEY}&q=${encodeURIComponent(rawQuery)}&image_type=photo&per_page=24&safesearch=true&order=popular&lang=fr`;
+      resp = await fetch(urlFR);
+      json = await resp.json();
+    }
+
+    gallery.innerHTML = '';
+
+    if (!json.hits || json.hits.length === 0) {
+      gallery.innerHTML = `
+        <div style="grid-column:1/-1; padding:20px; text-align:center; color:var(--text-muted);">
+          <div style="font-size:2rem; margin-bottom:8px;">🔍</div>
+          <p>Aucune image trouvée pour "<strong>${escHtml(rawQuery)}</strong>".<br>
+          Essaie un mot plus simple ou en anglais.</p>
+        </div>`;
+      return;
+    }
+
+    json.hits.forEach(hit => {
+      const img = document.createElement('img');
+      img.src     = hit.previewURL;    // miniature pour l'affichage galerie
+      img.alt     = query;
+      img.loading = 'lazy';
+      img.title   = hit.tags || '';
+      // Stocker previewURL (petit, stable) + largeImageURL pour qualité finale
+      img.dataset.preview = hit.previewURL;
+      img.dataset.large   = hit.largeImageURL || hit.webformatURL;
+      img.onclick = () => selectImage(img);
+      gallery.appendChild(img);
+    });
+  } catch (e) {
+    gallery.innerHTML = '<p style="color:var(--danger);padding:16px; grid-column:1/-1;">❌ Erreur de connexion à Pixabay.</p>';
+  }
+}
+
+/** Sélectionne une image et la convertit en base64 depuis l'élément déjà chargé */
+function selectImage(imgEl) {
+  document.querySelectorAll('#img-gallery img').forEach(i => i.classList.remove('selected'));
+  imgEl.classList.add('selected');
+  imgSelected = null;
+
+  const confirmBtn = document.querySelector('#modal-images .btn-primary');
+
+  // L'image miniature est DÉJÀ chargée dans le navigateur → on la lit directement
+  // depuis l'élément img (pas de fetch, pas de CORS)
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width  = imgEl.naturalWidth  || imgEl.width  || 300;
+    canvas.height = imgEl.naturalHeight || imgEl.height || 200;
+    canvas.getContext('2d').drawImage(imgEl, 0, 0);
+    imgSelected = canvas.toDataURL('image/jpeg', 0.85);
+    if (confirmBtn) { confirmBtn.textContent = '✅ Choisir cette image'; confirmBtn.disabled = false; }
+  } catch(e) {
+    // CORS sur la miniature → fallback fetch via blob URL de la preview
+    if (confirmBtn) { confirmBtn.textContent = '⏳ Conversion…'; confirmBtn.disabled = true; }
+    const preview = imgEl.dataset.preview || imgEl.src;
+    fetch(preview)
+      .then(r => r.blob())
+      .then(blob => {
+        const blobURL = URL.createObjectURL(blob);
+        return new Promise((resolve, reject) => {
+          const tmp = new Image();
+          tmp.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxW = 400;
+            const ratio = Math.min(1, maxW / tmp.naturalWidth);
+            canvas.width  = Math.round(tmp.naturalWidth  * ratio);
+            canvas.height = Math.round(tmp.naturalHeight * ratio);
+            canvas.getContext('2d').drawImage(tmp, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(blobURL);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+          };
+          tmp.onerror = () => { URL.revokeObjectURL(blobURL); reject(); };
+          tmp.src = blobURL;
+        });
+      })
+      .then(base64 => {
+        imgSelected = base64;
+        if (confirmBtn) { confirmBtn.textContent = '✅ Choisir cette image'; confirmBtn.disabled = false; }
+      })
+      .catch(() => {
+        // Dernier recours : stocker l'URL (peut expirer)
+        imgSelected = imgEl.dataset.large || preview;
+        if (confirmBtn) { confirmBtn.textContent = '✅ Choisir cette image'; confirmBtn.disabled = false; }
+        toast('⚠️ Image en URL temporaire', '');
+      });
+  }
+}
+
+/** Gère l'upload d'une image locale */
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    imgSelected = e.target.result;
+    // Afficher un aperçu
+    const gallery = document.getElementById('img-gallery');
+    gallery.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = imgSelected;
+    img.className = 'selected';
+    img.style.maxWidth = '200px';
+    gallery.appendChild(img);
+    toast('Image chargée ✅', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+/** Confirme le choix de l'image — attend la fin de la conversion base64 si nécessaire */
+function confirmImage() {
+  // Si la conversion est encore en cours (imgSelected = null) → attendre
+  if (imgSelected === null) {
+    toast('⏳ Conversion en cours, patientez…', '');
+    // Réessayer toutes les 200ms jusqu'à 5s
+    let attempts = 0;
+    const wait = setInterval(() => {
+      attempts++;
+      if (imgSelected !== null) {
+        clearInterval(wait);
+        applySelectedImage();
+      } else if (attempts >= 25) {
+        clearInterval(wait);
+        toast('❌ La conversion a échoué, réessayez', 'error');
+      }
+    }, 200);
+    return;
+  }
+  applySelectedImage();
+}
+
+/** Applique l'image sélectionnée à la carte */
+function applySelectedImage() {
+  if (!imgSelected) { toast('Sélectionne une image d\'abord', 'error'); return; }
+  if (imgTargetCardIndex !== null && editorCards[imgTargetCardIndex]) {
+    editorCards[imgTargetCardIndex].img = imgSelected;
+  }
+  closeModal('modal-images');
+  renderCardEditor();
+  toast('Image ajoutée ✅', 'success');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   13. INTERFACE ÉLÈVE — RÉVISION DES FLASHCARDS
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Lance réellement une session élève avec un tableau de cartes donné */
+function launchStudentSession(cards, packName, resumeWrongOnly = false) {
+  studentCards   = shuffle([...cards]);
+  studentIndex   = 0;
+  studentCorrect = 0;
+  studentWrong   = 0;
+  wrongCards     = [];
+  document.getElementById('student-pack-name').textContent =
+    packName + (resumeWrongOnly ? ' — Cartes à revoir' : '');
+  showView('student');
+  showCard();
+}
+
+/** Démarre la révision d'un paquet (depuis un lien ou clic) */
+function startStudentPack(classId, packId) {
+  const data = loadData();
+  const cls  = findClass(data, classId);
+  if (!cls) {
+    showStudentError('😕 Contenu introuvable', 'Ce lien n\'est pas encore disponible.<br>Demande à ton professeur de vérifier le lien ou réessaie plus tard.');
+    return;
+  }
+  const pack = findPack(cls, packId);
+  if (!pack) {
+    showStudentError('😕 Paquet introuvable', 'Ce paquet n\'existe pas ou a été supprimé.');
+    return;
+  }
+  if (!pack.cards || pack.cards.length === 0) {
+    showStudentError('📭 Paquet vide', 'Ce paquet ne contient pas encore de cartes.');
+    return;
+  }
+
+  // S'assurer que les cartes ont des IDs
+  pack.cards.forEach(c => { if (!c.id) c.id = uid(); });
+
+  currentStudentKey = 'fc_student_' + packId;
+  const saved = loadStudentProgress(currentStudentKey);
+
+  // Y a-t-il des cartes incorrectes sauvegardées de la dernière session ?
+  if (saved && saved.wrongIds && saved.wrongIds.length > 0) {
+    const wrongFromSaved = pack.cards.filter(c => saved.wrongIds.includes(c.id));
+    if (wrongFromSaved.length > 0) {
+      // Afficher la modale de reprise
+      showResumeModal(pack, wrongFromSaved);
+      return;
+    }
+  }
+
+  // Pas de sauvegarde → démarrer normalement
+  launchStudentSession(pack.cards, pack.name);
+}
+
+/** Affiche la modale de reprise de session */
+function showResumeModal(pack, wrongFromSaved) {
+  const allCount   = pack.cards.length;
+  const wrongCount = wrongFromSaved.length;
+  const dateStr    = (() => {
+    const saved = loadStudentProgress(currentStudentKey);
+    if (!saved || !saved.date) return '';
+    return new Date(saved.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+  })();
+
+  document.getElementById('resume-pack-name').textContent   = pack.name;
+  document.getElementById('resume-date').textContent        = dateStr ? `Dernière session : ${dateStr}` : '';
+  document.getElementById('resume-wrong-count').textContent = wrongCount;
+  document.getElementById('resume-all-count').textContent   = allCount;
+
+  // Bouton : reprendre les incorrectes
+  document.getElementById('btn-resume-wrong').onclick = () => {
+    closeModal('modal-resume');
+    launchStudentSession(wrongFromSaved, pack.name, true);
+  };
+  // Bouton : tout recommencer
+  document.getElementById('btn-resume-all').onclick = () => {
+    closeModal('modal-resume');
+    clearStudentProgress();
+    launchStudentSession(pack.cards, pack.name);
+  };
+
+  openModal('modal-resume');
+}
+
+/** Démarre la révision d'une classe entière (tous paquets) */
+function startStudentClass(classId) {
+  const data = loadData();
+  const cls  = findClass(data, classId);
+
+  if (!cls) {
+    // Classe introuvable → afficher un écran d'erreur élève clair
+    showStudentError(
+      '😕 Contenu introuvable',
+      'Ce lien n\'est pas encore disponible.<br>Demande à ton professeur de vérifier le lien ou réessaie plus tard.'
+    );
+    return;
+  }
+
+  if ((cls.packs || []).length === 0) {
+    showStudentError('📭 Aucun paquet', 'Cette classe ne contient pas encore de paquets de cartes.');
+    return;
+  }
+
+  // Si plusieurs paquets : afficher l'écran de sélection
+  if (cls.packs.length > 1) {
+    document.getElementById('student-class-title').textContent = cls.name;
+    const list = document.getElementById('student-pack-list');
+    list.innerHTML = '';
+
+    // Bouton "Tout réviser"
+    const allBtn = document.createElement('button');
+    allBtn.className = 'student-pack-btn';
+    allBtn.innerHTML = `<span class="pack-icon">📚</span><span>Tout réviser (${cls.packs.reduce((s,p)=>s+(p.cards||[]).length,0)} cartes)</span>`;
+    allBtn.onclick = () => {
+      const allCards = cls.packs.flatMap(p => p.cards || []);
+      studentCards   = shuffle(allCards);
+      studentIndex   = 0;
+      studentCorrect = 0;
+      studentWrong   = 0;
+      wrongCards     = [];
+      document.getElementById('student-pack-name').textContent = cls.name;
+      showView('student');
+      showCard();
+    };
+    list.appendChild(allBtn);
+
+    cls.packs.forEach(pack => {
+      const btn = document.createElement('button');
+      btn.className = 'student-pack-btn';
+      const svgSmall = packSVG().replace('width:72px;height:72px', 'width:40px;height:40px');
+      btn.innerHTML = `<span class="pack-icon">${svgSmall}</span><span>${pack.name} (${(pack.cards||[]).length} cartes)</span>`;
+      btn.onclick = () => startStudentPack(classId, pack.id);
+      list.appendChild(btn);
+    });
+
+    showView('student-select');
+    return;
+  }
+
+  // Un seul paquet : démarrer directement
+  startStudentPack(classId, cls.packs[0].id);
+}
+
+/** Affiche la carte courante */
+function showCard() {
+  const scene  = document.getElementById('flashcard-scene');
+  const end    = document.getElementById('end-screen');
+  const header = document.querySelector('.student-header');
+  const az     = document.getElementById('answer-zone');
+
+  // Remettre tous les éléments visibles, cacher l'écran de fin
+  end.classList.add('hidden');
+  scene.style.display   = '';
+  header.style.display  = '';
+  az.style.display      = '';
+  az.style.opacity      = '0';
+  az.style.pointerEvents = 'none';
+
+  if (studentIndex >= studentCards.length) {
+    showEndScreen();
+    return;
+  }
+
+  const card = studentCards[studentIndex];
+
+  // Recto (Français)
+  document.getElementById('card-word-fr').textContent = card.fr || '—';
+
+  // Verso (Anglais + image)
+  document.getElementById('card-word-en').textContent = card.en || '—';
+  const imgEl = document.getElementById('card-img');
+  if (card.img) {
+    imgEl.src = card.img;
+    imgEl.classList.remove('hidden');
+  } else {
+    imgEl.src = '';
+    imgEl.classList.add('hidden');
+  }
+
+  // Remettre la carte côté recto SANS animation (évite le flash du verso)
+  const inner = document.getElementById('flashcard-inner');
+  inner.style.transition = 'none';        // désactiver l'animation
+  inner.classList.remove('flipped');
+  inner.offsetHeight;                     // forcer le reflow CSS
+  requestAnimationFrame(() => {
+    inner.style.transition = '';          // réactiver l'animation pour le prochain flip
+  });
+  studentIsFlipped = false;
+
+  // Barre de progression
+  const total = studentCards.length;
+  const pct   = Math.round((studentIndex / total) * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = `${studentIndex} / ${total}`;
+}
+
+/** Retourne la carte (toggle recto ↔ verso) */
+function flipCard() {
+  const inner = document.getElementById('flashcard-inner');
+  const az    = document.getElementById('answer-zone');
+
+  if (!studentIsFlipped) {
+    studentIsFlipped = true;
+    inner.classList.add('flipped');
+    az.style.opacity      = '1';
+    az.style.pointerEvents = 'auto';
+    // Déclencher le son directement dans le gestionnaire de clic (obligatoire sur mobile)
+    speakCurrent();
+  } else {
+    studentIsFlipped = false;
+    inner.classList.remove('flipped');
+    az.style.opacity      = '0';
+    az.style.pointerEvents = 'none';
+    window.speechSynthesis && window.speechSynthesis.cancel();
+  }
+}
+
+/** Répond à la carte (correct ou non) et sauvegarde la progression */
+function answerCard(correct) {
+  if (!studentIsFlipped) return;
+  const card = studentCards[studentIndex];
+  if (correct) {
+    studentCorrect++;
+  } else {
+    studentWrong++;
+    wrongCards.push(card);
+  }
+  studentIndex++;
+  // Sauvegarder automatiquement la progression élève après chaque réponse
+  saveStudentProgress();
+  showCard();
+}
+
+/** Affiche l'écran de fin */
+function showEndScreen() {
+  // Sauvegarder la progression finale
+  // Si 0 incorrectes → effacer (l'élève a tout réussi)
+  if (wrongCards.length === 0) {
+    clearStudentProgress();
+  } else {
+    saveStudentProgress();
+  }
+
+  // Cacher les éléments de jeu
+  document.getElementById('flashcard-scene').style.display = 'none';
+  document.getElementById('answer-zone').style.display     = 'none';
+  document.getElementById('answer-zone').style.opacity     = '0';
+  document.querySelector('.student-header').style.display  = 'none';
+
+  // Afficher l'écran de fin
+  const end = document.getElementById('end-screen');
+  end.classList.remove('hidden');
+
+  document.getElementById('end-ok').textContent = studentCorrect;
+  document.getElementById('end-ko').textContent = studentWrong;
+
+  const pct = studentCards.length > 0 ? studentCorrect / studentCards.length : 0;
+  document.getElementById('end-emoji').textContent =
+    studentWrong === 0 ? '🏆' : pct >= 0.7 ? '🎉' : '💪';
+  document.getElementById('end-title').textContent =
+    studentWrong === 0 ? 'Parfait, tout bon !' : 'Paquet terminé !';
+  document.getElementById('end-subtitle').textContent =
+    studentWrong === 0
+      ? 'Bravo ! Tu connais toutes les cartes de ce paquet. 🌟'
+      : `${studentCorrect} bonne(s) réponse(s) sur ${studentCards.length} carte(s). Les incorrectes sont sauvegardées pour ta prochaine session !`;
+
+  document.getElementById('btn-review-wrong').style.display =
+    wrongCards.length > 0 ? '' : 'none';
+
+  // Bouton retour visible uniquement si lien classe (pas lien paquet direct)
+  const cameFromClassLink = isStudentMode && currentClassId &&
+    !new URLSearchParams(window.location.search).get('packId');
+  document.getElementById('btn-back-to-select').style.display =
+    cameFromClassLink ? '' : 'none';
+
+  document.getElementById('progress-bar').style.width = '100%';
+  document.getElementById('progress-text').textContent =
+    `${studentCards.length} / ${studentCards.length}`;
+}
+
+/** Recommencer toutes les cartes du paquet */
+function restartAll() {
+  // On repart de zéro : effacer la progression sauvegardée
+  clearStudentProgress();
+  // Recharger toutes les cartes depuis le localStorage (pour avoir les ids)
+  const allCards = [...studentCards, ...wrongCards];
+  studentCards   = shuffle(allCards);
+  studentIndex   = 0;
+  studentCorrect = 0;
+  studentWrong   = 0;
+  wrongCards     = [];
+  showCard();
+}
+
+/** Recommencer uniquement les cartes incorrectes */
+function restartWrong() {
+  if (wrongCards.length === 0) return;
+  studentCards   = shuffle([...wrongCards]);
+  studentIndex   = 0;
+  studentCorrect = 0;
+  studentWrong   = 0;
+  wrongCards     = [];
+  // La progression est déjà sauvegardée avec les wrong cards de la session précédente
+  showCard();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   14. SYNTHÈSE VOCALE (Web Speech API)
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Lit le mot anglais de la carte courante */
+function speakCurrent() {
+  // studentIndex pointe sur la carte affichée (pas encore incrémentée lors du flip)
+  const card = studentCards[studentIndex];
+  const text = (card && card.en) ? card.en.trim() : '';
+  if (!text) return;
+  speak(text, 'en-GB');
+}
+
+/** Synthèse vocale — compatible tous navigateurs y compris Xiaomi */
+function speak(text, lang = 'en-GB') {
+  const synth = window.speechSynthesis;
+  if (!synth) return;
+  synth.cancel();
+
+  const preferred = [
+    v => v.name.includes('Samantha'),
+    v => v.name.includes('Daniel'),
+    v => v.name.includes('Karen'),
+    v => v.name.includes('Google') && v.lang.startsWith('en'),
+    v => v.name.includes('Microsoft') && v.lang.startsWith('en'),
+    v => v.lang === 'en-GB',
+    v => v.lang === 'en-US',
+    v => v.lang.startsWith('en'),
+  ];
+
+  function buildAndSpeak(voices) {
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang   = lang;
+    utt.rate   = 0.85;
+    utt.pitch  = 1.0;
+    utt.volume = 1.0;
+    if (voices && voices.length) {
+      for (const test of preferred) {
+        const found = voices.find(test);
+        if (found) { utt.voice = found; break; }
+      }
+    }
+    try { synth.speak(utt); } catch(e) {}
+  }
+
+  const voices = synth.getVoices();
+  if (voices && voices.length > 0) {
+    buildAndSpeak(voices);
+  } else {
+    // Xiaomi / Android : voix pas encore chargées → attendre
+    let done = false;
+    synth.onvoiceschanged = () => {
+      if (done) return;
+      done = true;
+      synth.onvoiceschanged = null;
+      buildAndSpeak(synth.getVoices());
+    };
+    // Fallback après 500ms si onvoiceschanged ne se déclenche pas
+    setTimeout(() => {
+      if (!done) {
+        done = true;
+        buildAndSpeak(synth.getVoices());
+      }
+    }, 500);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   15. GÉNÉRATION DE LIENS DE PARTAGE
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Affiche la modale de partage */
+function showShareModal(type) {
+  const base = window.location.href.split('?')[0];
+  let link, desc;
+  if (type === 'class') {
+    link = `${base}?classId=${currentClassId}`;
+    desc = '🏫 Partagez ce lien avec vos élèves pour accéder à toute la classe :';
+  } else {
+    link = `${base}?classId=${currentClassId}&packId=${currentPackId}`;
+    desc = '🃏 Partagez ce lien avec vos élèves pour accéder à ce paquet :';
+  }
+  document.getElementById('share-desc').textContent = desc;
+  document.getElementById('share-link-box').textContent = link;
+  openModal('modal-share');
+}
+
+/** Copie le lien dans le presse-papiers */
+function copyShareLink() {
+  const link = document.getElementById('share-link-box').textContent;
+  navigator.clipboard.writeText(link)
+    .then(() => toast('Lien copié ! 📋', 'success'))
+    .catch(() => {
+      // Fallback manuel
+      const ta = document.createElement('textarea');
+      ta.value = link;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      toast('Lien copié ! 📋', 'success');
+    });
+}
+
+/** Lit les paramètres URL et redirige si nécessaire (mode élève) */
+function handleURLParams() {
+  const params  = new URLSearchParams(window.location.search);
+  const classId = params.get('classId');
+  const packId  = params.get('packId');
+
+  if (!classId) return false;
+
+  // Supprimer l'écran de chargement
+  hideStudentLoading();
+
+  // Activer le mode élève
+  isStudentMode = true;
+  activateStudentMode();
+
+  currentClassId = classId;
+  if (packId) {
+    currentPackId = packId;
+    startStudentPack(classId, packId);
+  } else {
+    startStudentClass(classId);
+  }
+  return true;
+}
+
+/** Affiche un écran d'erreur clair pour l'élève */
+function showStudentError(title, msg) {
+  const emoji = title.match(/^(😕|📭|🔒)/)?.[0] || '😕';
+  document.getElementById('error-emoji').textContent = emoji;
+  document.getElementById('error-title').textContent = title.replace(/^(😕|📭|🔒)\s*/, '');
+  document.getElementById('error-msg').innerHTML     = msg;
+  showView('student-error');
+}
+
+/** Adapte l'interface pour le mode élève (pas d'accès enseignant) */
+function activateStudentMode() {
+  // Ajouter le logo Accueil UNIQUEMENT en mode élève
+  const topbar = document.getElementById('topbar');
+  const logo   = document.createElement('div');
+  logo.className  = 'topbar-logo';
+  logo.innerHTML  = '🏠 Accueil';
+  logo.style.cursor = 'pointer';
+  logo.onclick    = () => goBackToStudentSelect();
+  topbar.prepend(logo);
+
+  // Cacher sync et breadcrumb
+  const syncEl = document.getElementById('sync-indicator');
+  if (syncEl) syncEl.style.display = 'none';
+  window.updateSyncIndicator = () => {};
+  document.getElementById('breadcrumb').style.display = 'none';
+  document.getElementById('topbar-actions').innerHTML = '';
+}
+
+/** Retour à l'écran de sélection de paquets (mode élève, lien classe) */
+function goBackToStudentSelect() {
+  // Couper le son en cours
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  // Si on a un classId mais pas de packId forcé → retour à la sélection
+  if (currentClassId) {
+    startStudentClass(currentClassId);
+  }
+}
+
+/** Met à jour le bouton "Retour aux paquets" dans la topbar élève */
+/** Met à jour la topbar élève selon la vue */
+function updateStudentTopbar(view) {
+  if (!isStudentMode) return;
+  // Plus de bouton "Mes paquets" — doublon avec "Accueil"
+  document.getElementById('topbar-actions').innerHTML = '';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   16b. TRANSFERT DE DONNÉES (EXPORT / IMPORT)
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Convertit toutes les images URL en base64 permanent (migration one-shot) */
+async function migrateImagesToBase64() {
+  const status = document.getElementById('migration-status');
+  const data   = loadData();
+  let total = 0, converted = 0, failed = 0;
+
+  // Compter les images à convertir
+  (data.classes || []).forEach(cls =>
+    (cls.packs || []).forEach(pack =>
+      (pack.cards || []).forEach(card => {
+        if (card.img && card.img.startsWith('http')) total++;
+      })
+    )
+  );
+
+  if (total === 0) {
+    status.textContent = '✅ Toutes les images sont déjà permanentes !';
+    return;
+  }
+
+  status.textContent = `⏳ Conversion en cours… 0 / ${total}`;
+
+  const convertUrl = (url) => fetch(url)
+    .then(r => r.blob())
+    .then(blob => new Promise((resolve, reject) => {
+      const img = new Image();
+      const obj = URL.createObjectURL(blob);
+      img.onload = () => {
+        const maxW = 400;
+        const ratio = Math.min(1, maxW / img.naturalWidth);
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.naturalWidth  * ratio);
+        canvas.height = Math.round(img.naturalHeight * ratio);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(obj);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.onerror = () => { URL.revokeObjectURL(obj); reject(); };
+      img.src = obj;
+    }))
+    .catch(() => null);
+
+  for (const cls of (data.classes || [])) {
+    for (const pack of (cls.packs || [])) {
+      for (const card of (pack.cards || [])) {
+        if (card.img && card.img.startsWith('http')) {
+          const base64 = await convertUrl(card.img);
+          if (base64) {
+            card.img = base64;
+            converted++;
+          } else {
+            failed++;
+          }
+          status.textContent = `⏳ Conversion… ${converted + failed} / ${total}`;
+        }
+      }
+    }
+  }
+
+  saveData(data);
+  status.innerHTML = `✅ <strong>${converted}</strong> image(s) converties en permanent !`
+    + (failed > 0 ? ` ⚠️ ${failed} non converties (URL expirée — à re-sélectionner)` : '');
+}
+
+/** Affiche la modale de transfert */
+function showTransferModal() {
+  // Calcul du résumé pour l'export
+  const data      = loadData();
+  const nbClasses = (data.classes || []).length;
+  const nbPacks   = (data.classes || []).reduce((s, c) => s + (c.packs || []).length, 0);
+  const nbCards   = (data.classes || []).reduce((s, c) =>
+    s + (c.packs || []).reduce((s2, p) => s2 + (p.cards || []).length, 0), 0);
+  document.getElementById('export-summary').innerHTML =
+    `📚 <strong>${nbClasses}</strong> classe(s) &nbsp;·&nbsp; 🃏 <strong>${nbPacks}</strong> paquet(s) &nbsp;·&nbsp; 🗂️ <strong>${nbCards}</strong> carte(s)`;
+  switchTransferTab('export');
+  openModal('modal-transfer');
+}
+
+/** Bascule entre les onglets Export et Import */
+function switchTransferTab(tab) {
+  document.getElementById('tab-export').style.display = tab === 'export' ? '' : 'none';
+  document.getElementById('tab-import').style.display = tab === 'import' ? '' : 'none';
+  document.getElementById('tab-export-btn').style.borderBottomColor = tab === 'export' ? 'var(--primary)' : 'transparent';
+  document.getElementById('tab-export-btn').style.color = tab === 'export' ? 'var(--primary)' : 'var(--text-muted)';
+  document.getElementById('tab-import-btn').style.borderBottomColor = tab === 'import' ? 'var(--primary)' : 'transparent';
+  document.getElementById('tab-import-btn').style.color = tab === 'import' ? 'var(--primary)' : 'var(--text-muted)';
+}
+
+/** Exporte les données en JSON (sauvegarde de sécurité uniquement) */
+function exportData() {
+  const data = loadData();
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const date = new Date().toISOString().slice(0, 10);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `flashcards-backup-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(`✅ Sauvegarde téléchargée`, 'success');
+  closeModal('modal-transfer');
+}
+
+/** Prévisualise le fichier JSON sélectionné avant import */
+function previewImportFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data      = JSON.parse(e.target.result);
+      const nbClasses = (data.classes || []).length;
+      const nbPacks   = (data.classes || []).reduce((s, c) => s + (c.packs || []).length, 0);
+      const nbCards   = (data.classes || []).reduce((s, c) =>
+        s + (c.packs || []).reduce((s2, p) => s2 + (p.cards || []).length, 0), 0);
+      const preview = document.getElementById('import-file-preview');
+      preview.style.display = '';
+      preview.innerHTML = `
+        <strong style="color:var(--success);">✅ Fichier valide</strong><br>
+        <span style="color:var(--text-muted);">Contient :</span>
+        <strong>${nbClasses}</strong> classe(s),
+        <strong>${nbPacks}</strong> paquet(s),
+        <strong>${nbCards}</strong> carte(s)
+      `;
+      document.getElementById('btn-confirm-import').style.display = '';
+      // Stocker le contenu parsé pour l'import
+      document.getElementById('btn-confirm-import').dataset.json = e.target.result;
+    } catch {
+      const preview = document.getElementById('import-file-preview');
+      preview.style.display = '';
+      preview.innerHTML = '<strong style="color:var(--danger);">❌ Fichier invalide</strong> — Ce n\'est pas un fichier de sauvegarde Flashcards.';
+      document.getElementById('btn-confirm-import').style.display = 'none';
+    }
+  };
+  reader.readAsText(file);
+}
+
+/** Importe les données depuis le fichier JSON sélectionné */
+function importData() {
+  const btn = document.getElementById('btn-confirm-import');
+  const raw = btn.dataset.json;
+  if (!raw) return;
+  if (!confirm('Confirmes-tu le remplacement de TOUTES tes données actuelles ?')) return;
+  try {
+    const data = JSON.parse(raw);
+    saveData(data);
+    closeModal('modal-transfer');
+    renderClassGrid();
+    showView('home');
+    toast('✅ Données importées avec succès !', 'success');
+  } catch {
+    toast('❌ Erreur lors de l\'import', 'error');
+  }
+}
+
+/** Ouvre une modale */
+function openModal(id) {
+  document.getElementById(id).classList.add('active');
+}
+
+/** Ferme une modale */
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+/** Fermer modale en cliquant l'overlay */
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+
+/** Confirmation de la modale dossier */
+document.getElementById('modal-folder-confirm').addEventListener('click', () => {
+  const name = document.getElementById('folder-name-input').value.trim();
+  if (!name) { toast('Entrez un nom', 'error'); return; }
+  const data = loadData();
+
+  if (folderModalMode === 'add-class') {
+    addClass(name);
+    toast('✅ Classe créée', 'success');
+  } else if (folderModalMode === 'add-pack') {
+    addPack(name);
+    toast('✅ Paquet créé', 'success');
+  } else if (folderModalMode === 'rename-class') {
+    const cls = findClass(data, folderModalTarget);
+    if (cls) { cls.name = name; saveData(data); renderClassGrid(); }
+    toast('✅ Classe renommée', 'success');
+  } else if (folderModalMode === 'rename-pack') {
+    const cls  = findClass(data, currentClassId);
+    const pack = cls ? findPack(cls, folderModalTarget) : null;
+    if (pack) {
+      pack.name = name;
+      saveData(data);
+      const updatedCls = findClass(loadData(), currentClassId);
+      if (updatedCls) renderPackGrid(updatedCls);
+    }
+    toast('✅ Paquet renommé', 'success');
+  }
+
+  closeModal('modal-folder');
+});
+
+/** Valider la saisie du nom avec Entrée */
+document.getElementById('folder-name-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('modal-folder-confirm').click();
+});
+
+/** Recherche image avec Entrée */
+document.getElementById('img-search-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') searchImages();
+});
+
+/** Séparateurs d'import — click sur les options */
+document.querySelectorAll('.sep-option').forEach(label => {
+  label.addEventListener('click', () => {
+    const group = label.dataset.group;
+    document.querySelectorAll(`.sep-option[data-group="${group}"]`).forEach(l => l.classList.remove('active'));
+    label.classList.add('active');
+    const radio = label.querySelector('input[type=radio]');
+    if (radio) radio.checked = true;
+
+    // Afficher/cacher le champ personnalisé
+    const customInput = group === 'term'
+      ? document.getElementById('sep-term-custom')
+      : document.getElementById('sep-card-custom');
+    customInput.classList.toggle('visible', label.dataset.val === 'custom');
+    customInput.classList.toggle('hidden', label.dataset.val !== 'custom');
+
+    updateImportPreview();
+  });
+});
+
+/** Mise à jour de l'aperçu à la saisie */
+document.getElementById('import-textarea').addEventListener('input', updateImportPreview);
+
+/** Intercepter Tab dans le textarea pour insérer un vrai caractère tabulation */
+document.getElementById('import-textarea').addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta    = e.target;
+    const start = ta.selectionStart;
+    const end   = ta.selectionEnd;
+    ta.value = ta.value.slice(0, start) + '\t' + ta.value.slice(end);
+    ta.selectionStart = ta.selectionEnd = start + 1;
+    updateImportPreview();
+  }
+});
+document.getElementById('sep-term-custom').addEventListener('input', updateImportPreview);
+document.getElementById('sep-card-custom').addEventListener('input', updateImportPreview);
+
+/* ══════════════════════════════════════════════════════════════════
+   UTILITAIRES
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Mélange un tableau (Fisher-Yates) */
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/** Échappe les caractères HTML */
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/** Affiche un toast */
+function toast(msg, type = '') {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   INITIALISATION
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Point d'entrée : chargement de l'application */
+function init() {
+  // Charger les voix TTS
+  if (window.speechSynthesis) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+  }
+
+  // Vérifier si mode élève (lien partagé avec classId)
+  const params    = new URLSearchParams(window.location.search);
+  const isStudent = !!params.get('classId');
+
+  if (!isStudent) {
+    // Afficher login IMMÉDIATEMENT — avant Firebase
+    showView('home');
+  }
+
+  // Firebase en arrière-plan
+  initFirebaseSync();
+}
+
+// Lancement
+document.addEventListener('DOMContentLoaded', init);
+
+/* ══════════════════════════════════════════════════════════════════
+   PWA — GÉNÉRATION D'ICÔNE & SERVICE WORKER
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Génère l'icône de l'app via Canvas et l'injecte dans le manifeste */
+function generateAppIcon(size) {
+  const canvas = document.createElement('canvas');
+  canvas.width  = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  // Fond dégradé bleu
+  const grad = ctx.createLinearGradient(0, 0, size, size);
+  grad.addColorStop(0, '#4F6EF7');
+  grad.addColorStop(1, '#1a1a2e');
+  ctx.fillStyle = grad;
+  // Coins arrondis
+  const r = size * 0.22;
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.lineTo(size - r, 0);
+  ctx.quadraticCurveTo(size, 0, size, r);
+  ctx.lineTo(size, size - r);
+  ctx.quadraticCurveTo(size, size, size - r, size);
+  ctx.lineTo(r, size);
+  ctx.quadraticCurveTo(0, size, 0, size - r);
+  ctx.lineTo(0, r);
+  ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  // Dessiner 4 cartes en éventail
+  const cx = size / 2;
+  const cy = size * 0.52;
+  const cw = size * 0.32;
+  const ch = size * 0.44;
+  const angles = [-28, -10, 8, 24];
+  const suits  = ['♠', '♦', '♣', '♥'];
+  const colors = ['rgba(255,255,255,0.55)', 'rgba(255,255,255,0.65)',
+                  'rgba(255,255,255,0.80)', '#ffffff'];
+  const suitColors = ['#fff', '#f74f6f', '#fff', '#f74f6f'];
+
+  angles.forEach((angle, i) => {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle * Math.PI / 180);
+    // Carte
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur  = size * 0.04;
+    ctx.fillStyle   = colors[i];
+    const rr = size * 0.04;
+    const x  = -cw / 2, y = -ch / 2;
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.lineTo(x + cw - rr, y);
+    ctx.quadraticCurveTo(x + cw, y, x + cw, y + rr);
+    ctx.lineTo(x + cw, y + ch - rr);
+    ctx.quadraticCurveTo(x + cw, y + ch, x + cw - rr, y + ch);
+    ctx.lineTo(x + rr, y + ch);
+    ctx.quadraticCurveTo(x, y + ch, x, y + ch - rr);
+    ctx.lineTo(x, y + rr);
+    ctx.quadraticCurveTo(x, y, x + rr, y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Symbole
+    ctx.fillStyle  = suitColors[i];
+    ctx.font       = `bold ${size * 0.16}px serif`;
+    ctx.textAlign  = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(suits[i], 0, size * 0.02);
+    ctx.restore();
+  });
+
+  // Drapeau 🇬🇧 en bas
+  ctx.font = `${size * 0.18}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🇬🇧', cx, size * 0.88);
+
+  return canvas.toDataURL('image/png');
+}
+
+/** Crée et enregistre le manifeste PWA dynamiquement */
+function setupPWA() {
+  const icon192 = generateAppIcon(192);
+  const icon512 = generateAppIcon(512);
+
+  const manifest = {
+    name: 'Flashcards App',
+    short_name: 'Flashcards',
+    description: 'Révision de vocabulaire anglais',
+    start_url: '/',
+    display: 'standalone',
+    background_color: '#F0F4FF',
+    theme_color: '#4F6EF7',
+    orientation: 'portrait-primary',
+    icons: [
+      { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+      { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+  const link = document.createElement('link');
+  link.rel  = 'manifest';
+  link.href = URL.createObjectURL(blob);
+  document.head.appendChild(link);
+
+  document.getElementById('apple-touch-icon').href = icon192;
+  document.getElementById('favicon').href = icon192;
+
+  // Désinstaller tout Service Worker existant (évite le cache bloquant Firebase)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations()
+      .then(regs => regs.forEach(r => r.unregister()));
+  }
+
+  // Masquer les bannières si déjà installé en mode standalone
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+  if (isStandalone) {
+    ['install-banner', 'install-banner-student'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+  }
+}
+
+// Variable globale pour le prompt d'installation natif
+let _installPrompt = null;
+
+// Capturer le prompt d'installation Chrome/Android dès qu'il est disponible
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPrompt = e;
+});
+
+/** Gère le clic sur "Télécharger l'app Flashcards" — universel */
+function handleInstallClick() {
+  if (_installPrompt) {
+    // Chrome / Android / Edge : installation native en 1 clic
+    _installPrompt.prompt();
+    _installPrompt.userChoice.then(() => { _installPrompt = null; });
+  } else {
+    // Tous les autres navigateurs (Xiaomi, Firefox, Safari iOS…)
+    showInstallInstructions();
+  }
+}
+
+/** Affiche les instructions d'installation selon le navigateur/OS */
+function showInstallInstructions() {
+  const ua       = navigator.userAgent;
+  const isIOS    = /iPhone|iPad|iPod/.test(ua);
+  const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
+
+  let instructions = '';
+  if (isIOS && isSafari) {
+    instructions = `<p style="margin-bottom:12px;">Sur <strong>iPhone/iPad avec Safari</strong> :</p>
+      <ol style="text-align:left; line-height:2; padding-left:20px;">
+        <li>Appuyez sur <strong>⬆️ Partager</strong> (bouton en bas)</li>
+        <li>Choisissez <strong>« Sur l'écran d'accueil »</strong></li>
+        <li>Appuyez sur <strong>« Ajouter »</strong></li>
+      </ol>`;
+  } else if (isIOS) {
+    instructions = `<p style="margin-bottom:12px;">Pour installer sur iPhone :</p>
+      <ol style="text-align:left; line-height:2; padding-left:20px;">
+        <li>Ouvrez ce lien dans <strong>Safari</strong> (pas Chrome)</li>
+        <li>Appuyez sur <strong>⬆️ Partager</strong></li>
+        <li>Choisissez <strong>« Sur l'écran d'accueil »</strong></li>
+      </ol>`;
+  } else {
+    instructions = `<p style="margin-bottom:12px;">Pour installer l'app :</p>
+      <ol style="text-align:left; line-height:2; padding-left:20px;">
+        <li>Appuyez sur le menu <strong>⋮</strong> de votre navigateur</li>
+        <li>Cherchez <strong>« Ajouter à l'écran d'accueil »</strong><br>
+            ou <strong>« Installer l'application »</strong></li>
+        <li>Confirmez en appuyant sur <strong>« Ajouter »</strong></li>
+      </ol>
+      <p style="margin-top:12px; font-size:0.82rem; color:var(--text-muted);">
+        💡 Si cette option n'apparaît pas, essayez avec <strong>Google Chrome</strong>.
+      </p>`;
+  }
+
+  // Afficher dans une modale simple
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:400px; text-align:center;">
+      <div style="font-size:2.5rem; margin-bottom:12px;">📲</div>
+      <h2 style="margin-bottom:16px;">Installer l'application</h2>
+      ${instructions}
+      <div class="modal-footer" style="justify-content:center; margin-top:20px;">
+        <button class="btn btn-primary" onclick="this.closest('.modal-overlay').remove()">
+          ✅ Compris !
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+// Lancer la PWA après chargement
+window.addEventListener('load', setupPWA);
+
+/* ══════════════════════════════════════════════════════════════════
+   DUPLIQUER UN PAQUET VERS UNE AUTRE CLASSE
+   ══════════════════════════════════════════════════════════════════ */
+
+
+
+function loadMyCards() {
+  try { return JSON.parse(localStorage.getItem(MY_CARDS_KEY) || '[]'); } catch { return []; }
+}
+function saveMyCards(cards) {
+  localStorage.setItem(MY_CARDS_KEY, JSON.stringify(cards));
+}
+
+/** Ouvre la vue Mes cartes */
+function openMyCards() {
+  renderMyCards();
+  showView('my-cards');
+}
+
+/** Rendu de la liste Mes cartes */
+function renderMyCards() {
+  const cards = loadMyCards();
+  const list  = document.getElementById('my-cards-list');
+  const btnStudy = document.getElementById('btn-study-my-cards');
+  if (!list) return;
+  list.innerHTML = '';
+  if (btnStudy) btnStudy.style.display = cards.length > 0 ? '' : 'none';
+
+  if (cards.length === 0) {
+    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);">
+      <div style="font-size:2.5rem;margin-bottom:8px;">✍️</div>
+      <p>Tu n'as pas encore de cartes personnelles.</p>
+      <p style="font-size:0.85rem;margin-top:4px;">Clique sur "Ajouter une carte" pour commencer !</p>
+    </div>`;
+    return;
+  }
+  cards.forEach((card, i) => {
+    const item = document.createElement('div');
+    item.style.cssText = 'background:var(--surface);border:2px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;display:grid;grid-template-columns:1fr 1fr 36px;gap:10px;align-items:center;';
+
+    const inputFr = document.createElement('input');
+    inputFr.type = 'text'; inputFr.placeholder = '🇫🇷 Mot français'; inputFr.value = card.fr || '';
+    inputFr.addEventListener('input', () => { const c = loadMyCards(); c[i].fr = inputFr.value; saveMyCards(c); });
+
+    const inputEn = document.createElement('input');
+    inputEn.type = 'text'; inputEn.placeholder = '🇬🇧 Traduction anglaise'; inputEn.value = card.en || '';
+    inputEn.addEventListener('input', () => { const c = loadMyCards(); c[i].en = inputEn.value; saveMyCards(c); });
+
+    const delBtn = document.createElement('button');
+    delBtn.innerHTML = '🗑️';
+    delBtn.style.cssText = 'width:36px;height:36px;border-radius:50%;border:2px solid var(--border);background:var(--surface2);cursor:pointer;font-size:1rem;';
+    delBtn.onclick = () => { const c = loadMyCards(); c.splice(i,1); saveMyCards(c); renderMyCards(); };
+
+    item.appendChild(inputFr); item.appendChild(inputEn); item.appendChild(delBtn);
+    list.appendChild(item);
+  });
+}
+
+/** Ajoute une carte personnelle */
+function addMyCard() {
+  const cards = loadMyCards();
+  cards.push({ id: uid(), fr: '', en: '' });
+  saveMyCards(cards);
+  renderMyCards();
+  setTimeout(() => {
+    const list = document.getElementById('my-cards-list');
+    list?.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 80);
+}
+
+/** Lance la révision des cartes personnelles */
+function startMyCardsStudy() {
+  const cards = loadMyCards().filter(c => c.fr || c.en);
+  if (cards.length === 0) { toast('Ajoute des cartes avant de réviser !', 'error'); return; }
+  currentStudentKey = MY_CARDS_KEY + '_progress';
+  launchStudentSession(cards, '✍️ Mes cartes');
+}
+</script>
+</body>
+</html>

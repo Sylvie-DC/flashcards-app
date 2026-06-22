@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guide d'installation — Flashcards App</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #F0F4FF;
+      color: #1A1F3C;
+      line-height: 1.6;
+    }
+    .container { max-width: 800px; margin: 0 auto; padding: 40px 24px; }
+
+    /* En-tête */
+    .header {
+      background: linear-gradient(135deg, #4F6EF7, #1a1a2e);
+      color: #fff;
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .header h1 { font-size: 2rem; margin-bottom: 10px; }
+    .header p  { opacity: 0.85; font-size: 1.05rem; }
+
+    /* Étapes */
+    .step {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 20px;
+      border: 2px solid #D0DAFF;
+      box-shadow: 0 4px 20px rgba(79,110,247,0.08);
+    }
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .step-num {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, #4F6EF7, #2F4ED4);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 900;
+      flex-shrink: 0;
+    }
+    .step-title { font-size: 1.2rem; font-weight: 800; color: #1A1F3C; }
+    .step-subtitle { font-size: 0.85rem; color: #6B7499; font-weight: 600; margin-top: 2px; }
+
+    ol, ul { padding-left: 22px; }
+    li { margin-bottom: 8px; font-size: 0.95rem; }
+    li strong { color: #4F6EF7; }
+
+    .code {
+      background: #1a1a2e;
+      color: #7B94FA;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      margin: 12px 0;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .tip {
+      background: #EAF0FF;
+      border-left: 4px solid #4F6EF7;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      margin: 12px 0;
+      font-size: 0.9rem;
+    }
+    .warning {
+      background: #FFF3CD;
+      border-left: 4px solid #F7C14F;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      margin: 12px 0;
+      font-size: 0.9rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #EAF0FF;
+      color: #4F6EF7;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+    .badge.green { background: #D4F7E7; color: #1a7a4a; }
+    .badge.orange { background: #FFF3CD; color: #7a5c00; }
+
+    .recap {
+      background: linear-gradient(135deg, #27C97A, #1a7a4a);
+      color: #fff;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-top: 32px;
+    }
+    .recap h2 { margin-bottom: 16px; font-size: 1.3rem; }
+    .recap ul { list-style: none; padding: 0; }
+    .recap li { padding: 6px 0; font-size: 0.95rem; }
+    .recap li::before { content: '✅ '; }
+
+    a { color: #4F6EF7; font-weight: 700; }
+
+    @media (max-width: 600px) {
+      .header { padding: 24px; }
+      .header h1 { font-size: 1.5rem; }
+      .step { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div style="font-size:3rem; margin-bottom:12px;">📚</div>
+    <h1>Flashcards App — Guide d'installation</h1>
+    <p>Créez votre propre application de flashcards anglais-français<br>en 3 étapes simples • Gratuit • Sans abonnement</p>
+  </div>
+
+  <!-- Ce que vous recevez -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">🃏</div>
+      <div>
+        <div class="step-title">Ce que vous avez reçu</div>
+        <div class="step-subtitle">Contenu du package</div>
+      </div>
+    </div>
+    <ul>
+      <li><strong>flashcards-vierge.html</strong> — Le fichier principal de l'application (à personnaliser)</li>
+      <li><strong>guide-installation.html</strong> — Ce guide (vous y êtes !)</li>
+    </ul>
+    <div class="tip">💡 L'application fonctionne déjà en local sur votre ordinateur, sans installation. Ouvrez simplement <strong>flashcards-vierge.html</strong> dans votre navigateur pour tester !</div>
+  </div>
+
+  <!-- Étape 1 : Pixabay -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-title">Clé API Pixabay <span class="badge green">Gratuit</span></div>
+        <div class="step-subtitle">Pour les suggestions d'images automatiques</div>
+      </div>
+    </div>
+    <ol>
+      <li>Allez sur <a href="https://pixabay.com" target="_blank">pixabay.com</a> → créez un compte gratuit</li>
+      <li>Allez sur <a href="https://pixabay.com/api/docs" target="_blank">pixabay.com/api/docs</a></li>
+      <li>Votre clé API apparaît en haut de la page — copiez-la</li>
+      <li>Ouvrez <strong>flashcards-vierge.html</strong> dans un éditeur de texte (TextEdit sur Mac, Notepad sur Windows)</li>
+      <li>Cherchez ce texte et remplacez-le par votre clé :</li>
+    </ol>
+    <div class="code">const PIXABAY_KEY = 'VOTRE_CLE_PIXABAY';
+→ remplacer par :
+const PIXABAY_KEY = '12345678-abcdef1234567890abcdef12';</div>
+  </div>
+
+  <!-- Étape 2 : Mistral -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">2</div>
+      <div>
+        <div class="step-title">Clé API Mistral AI <span class="badge green">Gratuit</span></div>
+        <div class="step-subtitle">Pour la génération de listes de vocabulaire par IA</div>
+      </div>
+    </div>
+    <ol>
+      <li>Allez sur <a href="https://console.mistral.ai" target="_blank">console.mistral.ai</a></li>
+      <li>Créez un compte gratuit (email suffit)</li>
+      <li>Menu <strong>« API Keys »</strong> → <strong>« Create new key »</strong></li>
+      <li>Copiez la clé générée</li>
+      <li>Dans <strong>flashcards-vierge.html</strong>, remplacez :</li>
+    </ol>
+    <div class="code">const MISTRAL_KEY = 'VOTRE_CLE_MISTRAL';
+→ remplacer par votre clé Mistral</div>
+  </div>
+
+  <!-- Étape 3 : Firebase -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <div>
+        <div class="step-title">Base de données Firebase <span class="badge green">Gratuit</span></div>
+        <div class="step-subtitle">Pour synchroniser vos données sur tous vos appareils</div>
+      </div>
+    </div>
+    <ol>
+      <li>Allez sur <a href="https://firebase.google.com" target="_blank">firebase.google.com</a> → connectez-vous avec Google</li>
+      <li>Cliquez <strong>« Créer un projet »</strong> → choisissez un nom → désactivez Analytics → <strong>« Créer »</strong></li>
+      <li>Dans le menu gauche → <strong>« Realtime Database »</strong> → <strong>« Créer une base de données »</strong></li>
+      <li>Choisissez <strong>« Mode test »</strong> → région <strong>europe-west3</strong> → <strong>« Activer »</strong></li>
+      <li>Cliquez l'icône ⚙️ → <strong>« Paramètres du projet »</strong> → descendez jusqu'à <strong>« Vos applications »</strong></li>
+      <li>Cliquez l'icône <strong>&lt;/&gt;</strong> (Web) → nommez l'app → <strong>« Enregistrer »</strong></li>
+      <li>Copiez le bloc <strong>firebaseConfig</strong> qui apparaît</li>
+      <li>Dans <strong>flashcards-vierge.html</strong>, remplacez le bloc firebaseConfig par le vôtre :</li>
+    </ol>
+    <div class="code">const firebaseConfig = {
+  apiKey:            "VOTRE_API_KEY_FIREBASE",
+  authDomain:        "VOTRE_PROJET.firebaseapp.com",
+  databaseURL:       "https://VOTRE_PROJET-default-rtdb...",
+  projectId:         "VOTRE_PROJET",
+  ...
+};</div>
+    <div class="warning">⚠️ N'oubliez pas d'aller dans <strong>Realtime Database → Règles</strong> et de mettre <strong>.read: true, .write: true</strong> puis cliquez <strong>Publier</strong>.</div>
+
+  </div>
+
+  <!-- Étape 4 : Cloudflare -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">4</div>
+      <div>
+        <div class="step-title">Déploiement sur Cloudflare Pages <span class="badge green">Gratuit</span></div>
+        <div class="step-subtitle">Pour mettre votre application en ligne</div>
+      </div>
+    </div>
+    <ol>
+      <li>Allez sur <a href="https://pages.cloudflare.com" target="_blank">pages.cloudflare.com</a></li>
+      <li>Créez un compte gratuit</li>
+      <li>Cliquez <strong>« Create a project »</strong> → <strong>« Upload assets »</strong></li>
+      <li>Nommez votre projet (ex : <strong>flashcards-dupont</strong>)</li>
+      <li>Glissez-déposez votre fichier <strong>flashcards-vierge.html</strong> — <strong>renommé en index.html</strong></li>
+      <li>Cliquez <strong>« Deploy site »</strong></li>
+      <li>Votre URL sera : <strong>flashcards-dupont.pages.dev</strong> ✅</li>
+    </ol>
+    <div class="tip">💡 Pour mettre à jour votre application plus tard : revenez sur Cloudflare → votre projet → <strong>« Create deployment »</strong> → re-déposez votre index.html modifié.</div>
+  </div>
+
+  <!-- Utilisation -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">🏠</div>
+      <div>
+        <div class="step-title">Utilisation au quotidien</div>
+        <div class="step-subtitle">Comment utiliser votre application</div>
+      </div>
+    </div>
+    <ul>
+      <li><strong>Interface enseignant :</strong> ouvrez votre URL → l'interface enseignant s'ouvre directement → créez vos classes et paquets de cartes</li>
+      <li><strong>Partager avec les élèves :</strong> dans un paquet → bouton 🔗 Partager → copiez le lien → envoyez-le aux élèves</li>
+      <li><strong>Générer des cartes avec l'IA :</strong> dans un paquet → bouton ✨ Générer avec l'IA → entrez un thème et le nombre de cartes souhaité</li>
+      <li><strong>Importer une liste :</strong> dans un paquet → 📥 Importer une liste → collez votre liste depuis Excel ou Word</li>
+      <li><strong>Sauvegarde :</strong> bouton 🔁 Transfert → 📤 Exporter → téléchargez un fichier .json de sauvegarde</li>
+    </ul>
+  </div>
+
+  <!-- Récap -->
+  <div class="recap">
+    <h2>✅ Récapitulatif — Tout ce que vous devez faire</h2>
+    <ul>
+      <li>Créer un compte Pixabay → récupérer la clé API</li>
+      <li>Créer un compte Mistral AI → récupérer la clé API</li>
+      <li>Créer un projet Firebase → récupérer le firebaseConfig → activer les règles</li>
+      <li>Modifier les 3 éléments dans flashcards-vierge.html</li>
+      <li>Renommer le fichier en index.html</li>
+      <li>Créer un compte Cloudflare Pages → déployer le fichier</li>
+      <li>Votre app est en ligne ! 🎉</li>
+    </ul>
+    <p style="margin-top:16px; font-size:0.85rem; opacity:0.85;">
+      ⏱️ Temps estimé : 20-30 minutes pour la première installation
+    </p>
+  </div>
+
+</div>
+</body>
+</html>
