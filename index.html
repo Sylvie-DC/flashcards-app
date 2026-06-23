@@ -3663,6 +3663,8 @@ window.addEventListener('load', setupPWA);
 
 
 
+const MY_CARDS_KEY = 'flashcards_my_cards';
+
 function loadMyCards() {
   try { return JSON.parse(localStorage.getItem(MY_CARDS_KEY) || '[]'); } catch { return []; }
 }
